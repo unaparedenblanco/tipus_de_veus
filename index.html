@@ -1,0 +1,3397 @@
+<!DOCTYPE html>
+<html lang="ca"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TEST - Miguel Castellá</title>
+  <!-- Google Fonts per a una tipografia natural i llegible -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&amp;family=Nunito:wght@400;600;700;800&amp;display=swap" rel="stylesheet">
+  <!-- Llibreria per als efectes de confeti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    body, html {
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      font-family: 'Nunito', system-ui, -apple-system, sans-serif;
+      background-color: #000;
+      color: #fff;
+    }
+
+    #game-container {
+      position: relative;
+      width: 100vw;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: #111 center/cover no-repeat;
+      overflow: hidden;
+    }
+
+    /* PANTALLA DE SELECCIÓ D'IDIOMA (PRIMERA PANTALLA) */
+    .lang-screen {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: radial-gradient(circle, rgba(15,23,42,0.98) 0%, rgba(0,0,0,0.99) 100%);
+      backdrop-filter: blur(12px);
+      z-index: 400;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 24px;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .lang-title {
+      font-family: 'Fredoka', sans-serif;
+      font-size: clamp(1.8rem, 4vw, 3rem);
+      color: #ffcc00;
+      text-shadow: 3px 3px #1e293b;
+      letter-spacing: 1px;
+    }
+
+    .lang-subtitle {
+      font-size: clamp(0.9rem, 2vw, 1.2rem);
+      color: #38bdf8;
+      max-width: 500px;
+    }
+
+    .lang-buttons-grid {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 10px;
+    }
+
+    .btn-lang {
+      background: #1e293b;
+      border: 3px solid #38bdf8;
+      color: #fff;
+      padding: 16px 28px;
+      font-size: 1rem;
+      font-family: 'Fredoka', sans-serif;
+      border-radius: 14px;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+      transition: all 0.2s ease;
+      min-width: 160px;
+    }
+
+    .btn-lang:hover {
+      transform: translateY(-4px);
+      background: #38bdf8;
+      color: #0f172a;
+      border-color: #ffcc00;
+      box-shadow: 0 12px 25px rgba(56, 189, 248, 0.4);
+    }
+
+    /* PANTALLA DE PRESENTACIÓ / INICI */
+    .start-screen {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.88);
+      backdrop-filter: blur(8px);
+      z-index: 150;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 14px;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .start-title {
+      font-family: 'Fredoka', sans-serif;
+      font-size: clamp(2.2rem, 5vw, 4rem);
+      color: #ffcc00;
+      text-shadow: 3px 3px #e74c3c, 6px 6px #000;
+      letter-spacing: 2px;
+      margin-bottom: 2px;
+    }
+
+    .start-subtitle {
+      font-size: clamp(0.9rem, 2vw, 1.2rem);
+      color: #38bdf8;
+      text-shadow: 2px 2px #000;
+      margin-bottom: 5px;
+      font-weight: 700;
+    }
+
+    /* CONTENIDOR DELS 4 ELEMENTS INICI */
+    .gems-tracker-start {
+      background: rgba(15, 23, 42, 0.88);
+      border: 3px solid #ffcc00;
+      border-radius: 14px;
+      padding: 14px 20px;
+      max-width: 580px;
+      width: 100%;
+      margin-bottom: 5px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+    }
+
+    .gems-tracker-title {
+      font-size: 0.85rem;
+      color: #ffcc00;
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+
+    .gems-grid {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .gem-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      opacity: 0.35;
+      filter: grayscale(1);
+      transition: all 0.4s ease;
+    }
+
+    .gem-item.unlocked {
+      opacity: 1;
+      filter: grayscale(0) drop-shadow(0 0 8px #fff) drop-shadow(0 0 16px rgba(56, 189, 248, 0.9)) drop-shadow(0 0 24px rgba(255, 204, 0, 0.7));
+      transform: scale(1.08);
+    }
+
+    .gem-icon {
+      font-size: clamp(1.8rem, 4vw, 2.4rem);
+    }
+
+    .gem-name {
+      font-size: 0.65rem;
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .start-buttons-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+      max-width: 380px;
+      align-items: center;
+    }
+
+    .btn-start-menu {
+      background: #22c55e;
+      color: #fff;
+      border: 3px solid #fff;
+      padding: 14px 20px;
+      font-size: clamp(0.75rem, 1.3vw, 0.95rem);
+      font-family: 'Fredoka', sans-serif;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 6px 0 #15803d, 0 10px 20px rgba(0,0,0,0.5);
+      transition: all 0.2s;
+      width: 100%;
+    }
+    .btn-start-menu:hover {
+      transform: translateY(-2px);
+      background: #16a34a;
+    }
+
+    .btn-start-menu.timer-btn {
+      background: #3b82f6;
+      box-shadow: 0 6px 0 #1d4ed8, 0 10px 20px rgba(0,0,0,0.5);
+    }
+    .btn-start-menu.timer-btn:hover {
+      background: #2563eb;
+    }
+
+    .btn-start-config {
+      background: #eab308;
+      color: #000;
+      border: 3px solid #fff;
+      padding: 12px 20px;
+      font-size: clamp(0.75rem, 1.3vw, 0.95rem);
+      font-family: 'Fredoka', sans-serif;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 6px 0 #ca8a04, 0 10px 20px rgba(0,0,0,0.5);
+      transition: all 0.2s;
+      width: 100%;
+    }
+    .btn-start-config:hover {
+      transform: translateY(-2px);
+      background: #ca8a04;
+      color: #fff;
+    }
+
+    .btn-start-lang {
+      background: #0ea5e9;
+      color: #fff;
+      border: 3px solid #fff;
+      padding: 12px 20px;
+      font-size: clamp(0.75rem, 1.3vw, 0.95rem);
+      font-family: 'Fredoka', sans-serif;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 6px 0 #0369a1, 0 10px 20px rgba(0,0,0,0.5);
+      transition: all 0.2s;
+      width: 100%;
+    }
+    .btn-start-lang:hover {
+      transform: translateY(-2px);
+      background: #0284c7;
+    }
+
+    .btn-reset-gems {
+      background: transparent;
+      border: 1px solid #64748b;
+      color: #94a3b8;
+      padding: 6px 12px;
+      font-size: 0.65rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      margin-top: 6px;
+      font-weight: 600;
+    }
+    .btn-reset-gems:hover {
+      color: #ef4444;
+      border-color: #ef4444;
+    }
+
+    /* PANTALLA SELECCIÓ D'ELEMENT I PERSONATGE */
+    .char-select-screen {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.96);
+      backdrop-filter: blur(8px);
+      z-index: 140;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 18px;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .select-section-title {
+      font-family: 'Fredoka', sans-serif;
+      font-size: clamp(0.95rem, 2vw, 1.25rem);
+      color: #ffcc00;
+      text-shadow: 2px 2px #000;
+      text-align: center;
+      margin-top: 5px;
+    }
+
+    .gem-select-grid {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .gem-select-card {
+      background: #1e293b;
+      border: 3px solid #334155;
+      border-radius: 12px;
+      padding: 10px;
+      width: 115px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .gem-select-card:hover:not(.already-unlocked) {
+      border-color: #ffcc00;
+      transform: translateY(-4px);
+    }
+
+    .gem-select-card.selected {
+      border-color: #22c55e;
+      background: #0f172a;
+      box-shadow: 0 0 15px rgba(34, 197, 94, 0.5);
+    }
+
+    .gem-select-card.already-unlocked {
+      opacity: 0.5;
+      cursor: not-allowed;
+      border-color: #64748b;
+    }
+
+    .char-cards-container {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .char-card {
+      background: #1e293b;
+      border: 3px solid #38bdf8;
+      border-radius: 12px;
+      padding: 15px;
+      width: 170px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .char-card:hover {
+      transform: translateY(-4px);
+      border-color: #ffcc00;
+    }
+
+    .char-card.selected {
+      border-color: #22c55e;
+      box-shadow: 0 0 15px rgba(34, 197, 94, 0.5);
+    }
+
+    .char-card-avatar {
+      width: 90px;
+      height: 100px;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+    }
+
+    .char-card-name {
+      font-family: 'Fredoka', sans-serif;
+      font-size: 0.8rem;
+      color: #fff;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .btn-exit-game {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      z-index: 200;
+      background: #ef4444;
+      border: 2px solid #fff;
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-family: 'Fredoka', sans-serif;
+      box-shadow: 0 4px 0 #991b1b;
+      transition: all 0.2s;
+    }
+    .btn-exit-game:hover {
+      background: #dc2626;
+      transform: translateY(-2px);
+    }
+
+    .btn-config {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      z-index: 200;
+      background: rgba(0,0,0,0.6);
+      border: 2px solid #fff;
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-family: 'Fredoka', sans-serif;
+      transition: all 0.2s;
+    }
+    .btn-config:hover { background: #ffcc00; color: #000; }
+
+    .btn-lang-switch {
+      position: absolute;
+      top: 15px;
+      right: 115px;
+      z-index: 200;
+      background: rgba(14, 165, 233, 0.35);
+      border: 2px solid #38bdf8;
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-family: 'Fredoka', sans-serif;
+      transition: all 0.2s;
+    }
+    .btn-lang-switch:hover { background: #38bdf8; color: #0f172a; }
+
+    /* BARRA SUPERIOR D'ESTAT (HUD) */
+    .hud {
+      width: 100%;
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: linear-gradient(180deg, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0) 100%);
+      z-index: 10;
+    }
+
+    .fighter-hud {
+      flex: 1;
+      max-width: 40%;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .fighter-hud.right {
+      align-items: flex-end;
+    }
+
+    .fighter-hud-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+    }
+
+    .fighter-hud.right .fighter-hud-row {
+      flex-direction: row-reverse;
+    }
+
+    .hud-avatar {
+      width: 54px;
+      height: 54px;
+      border: 3px solid #ffcc00;
+      border-radius: 8px;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-color: #1e293b;
+      flex-shrink: 0;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.6);
+    }
+
+    .fighter-info-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .fighter-name {
+      font-family: 'Fredoka', sans-serif;
+      font-size: clamp(0.75rem, 1.8vw, 1.15rem);
+      color: #ffcc00;
+      text-shadow: 2px 2px #000;
+      margin-bottom: 4px;
+      font-weight: 700;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
+    .health-bar-container {
+      width: 100%;
+      height: 24px;
+      background: #333;
+      border: 3px solid #fff;
+      box-shadow: 0 0 10px rgba(0,0,0,0.8);
+      position: relative;
+      overflow: hidden;
+      border-radius: 6px;
+    }
+
+    .health-bar {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(180deg, #2ecc71, #27ae60);
+      transition: width 0.8s ease-out, background 0.8s ease;
+    }
+
+    .health-bar.yellow { background: linear-gradient(180deg, #f1c40f, #f39c12); }
+    .health-bar.red { background: linear-gradient(180deg, #e74c3c, #c0392b); }
+
+    .health-bar-container.right .health-bar {
+      float: right;
+    }
+
+    .timer-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 0 10px;
+    }
+
+    .timer-box {
+      background: #e74c3c;
+      border: 3px solid #fff;
+      color: #fff;
+      font-family: 'Fredoka', sans-serif;
+      font-size: clamp(0.9rem, 2vw, 1.4rem);
+      padding: 4px 12px;
+      border-radius: 8px;
+      box-shadow: 0 4px 0 #900;
+    }
+
+    /* CONTENIDOR D'ELEMENTS EN COMBAT (HUD) */
+    .hud-gems-bar {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+      background: rgba(0, 0, 0, 0.65);
+      padding: 4px 8px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+    }
+
+    .hud-gem-slot {
+      opacity: 0.25;
+      filter: grayscale(1);
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .hud-gem-slot.unlocked {
+      opacity: 1;
+      filter: grayscale(0) drop-shadow(0 0 5px #fff) drop-shadow(0 0 12px rgba(0, 243, 255, 0.95));
+    }
+
+    .hud-gem-slot.current-target {
+      opacity: 1;
+      filter: grayscale(0);
+      animation: pulseTargetGem 1.2s infinite alternate;
+    }
+
+    @keyframes pulseTargetGem {
+      0% { transform: scale(1); filter: drop-shadow(0 0 4px #fff) drop-shadow(0 0 10px #38bdf8); }
+      100% { transform: scale(1.3); filter: drop-shadow(0 0 8px #fff) drop-shadow(0 0 18px #ffcc00); }
+    }
+
+    /* ESCENARI DE COMBAT */
+    .stage {
+      flex: 1;
+      position: relative;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding: 0 10%;
+      padding-bottom: 2dvh;
+    }
+
+    .character {
+      width: clamp(150px, 25vw, 320px);
+      height: clamp(180px, 45dvh, 400px);
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: bottom center;
+      transition: transform 0.8s ease;
+      filter: drop-shadow(0 10px 15px rgba(0,0,0,0.7));
+      position: relative;
+    }
+
+    .attack-p1 { animation: animAttackP1 1s cubic-bezier(0.25, 1, 0.5, 1); }
+    .super-attack-p1 { animation: animSuperAttackP1 1.2s cubic-bezier(0.25, 1, 0.5, 1); }
+    .attack-p2 { animation: animAttackP2 1s cubic-bezier(0.25, 1, 0.5, 1); }
+    .hit { animation: animHit 0.8s ease-in-out; }
+
+    @keyframes animAttackP1 {
+      0% { transform: translateX(0); }
+      50% { transform: translateX(140px) scale(1.15); }
+      100% { transform: translateX(0); }
+    }
+
+    @keyframes animSuperAttackP1 {
+      0% { transform: translateX(0); }
+      20% { transform: translateX(-30px) scale(0.9); filter: brightness(2) drop-shadow(0 0 20px #ffcc00); }
+      60% { transform: translateX(220px) scale(1.3); filter: brightness(3) drop-shadow(0 0 30px #38bdf8); }
+      100% { transform: translateX(0); }
+    }
+
+    @keyframes animAttackP2 {
+      0% { transform: translateX(0); }
+      50% { transform: translateX(-140px) scale(1.15); }
+      100% { transform: translateX(0); }
+    }
+
+    @keyframes animHit {
+      0% { filter: brightness(1) drop-shadow(0 10px 15px rgba(0,0,0,0.7)); }
+      25% { filter: brightness(4) sepia(1) hue-rotate(-50deg); transform: translateX(-15px) rotate(-5deg); }
+      50% { filter: brightness(5) sepia(1) hue-rotate(-50deg); transform: translateX(15px) rotate(5deg); }
+      75% { filter: brightness(3) sepia(1); transform: translateX(-5px); }
+      100% { filter: brightness(1) drop-shadow(0 10px 15px rgba(0,0,0,0.7)); transform: translateX(0); }
+    }
+
+    .floating-text {
+      position: absolute;
+      top: 20%;
+      font-family: 'Fredoka', sans-serif;
+      font-size: clamp(1rem, 2.5vw, 1.8rem);
+      font-weight: 700;
+      text-shadow: 3px 3px 0 #000, -2px -2px 0 #000;
+      pointer-events: none;
+      z-index: 120;
+      animation: floatUp 1.4s ease-out forwards;
+    }
+
+    @keyframes floatUp {
+      0% { opacity: 0; transform: translateY(20px) scale(0.6); }
+      20% { opacity: 1; transform: translateY(-10px) scale(1.2); }
+      80% { opacity: 1; transform: translateY(-40px) scale(1); }
+      100% { opacity: 0; transform: translateY(-70px) scale(0.8); }
+    }
+
+    /* MODAL POP-UP PREGUNTA */
+    .modal-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      padding: 20px;
+    }
+
+    .modal-quiz {
+      background: rgba(15, 23, 42, 0.96);
+      border: 4px solid #ffcc00;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 680px;
+      padding: 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.85), 0 0 20px rgba(255, 204, 0, 0.3);
+      animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      position: relative;
+    }
+
+    .question-timer-bar-container {
+      width: 100%;
+      height: 12px;
+      background: #1e293b;
+      border: 2px solid #ffcc00;
+      border-radius: 6px;
+      margin-bottom: 14px;
+      overflow: hidden;
+      display: none;
+    }
+
+    .question-timer-bar {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, #22c55e, #eab308, #ef4444);
+      transition: width 0.1s linear;
+    }
+
+    .question-timer-text {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #ffcc00;
+      margin-bottom: 8px;
+      display: none;
+      font-weight: 700;
+    }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .question-title {
+      font-size: clamp(1rem, 1.8vw, 1.25rem);
+      line-height: 1.5;
+      color: #fff;
+      margin-bottom: 15px;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    .question-image-container {
+      width: 100%;
+      max-height: 180px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .question-image {
+      max-width: 100%;
+      max-height: 180px;
+      border-radius: 8px;
+      border: 2px solid #38bdf8;
+      object-fit: contain;
+    }
+
+    .question-audio-container {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .question-audio {
+      width: 100%;
+      max-width: 400px;
+      border-radius: 8px;
+    }
+
+    .options-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 600px) {
+      .options-grid { grid-template-columns: 1fr; }
+    }
+
+    .option-btn {
+      background: #1e293b;
+      border: 2px solid #38bdf8;
+      color: #fff;
+      padding: 12px 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: clamp(0.8rem, 1.4vw, 0.95rem);
+      font-family: 'Nunito', sans-serif;
+      text-align: left;
+      transition: all 0.2s;
+      line-height: 1.4;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 600;
+    }
+
+    .option-btn:hover {
+      background: #38bdf8;
+      color: #0f172a;
+      transform: translateY(-2px);
+    }
+
+    .option-btn.correct-feedback {
+      background: #22c55e !important;
+      border-color: #fff !important;
+      color: #fff !important;
+      animation: pulseGreen 0.6s infinite alternate;
+    }
+
+    .option-btn.wrong-feedback {
+      background: #ef4444 !important;
+      border-color: #7f1d1d !important;
+      opacity: 0.7;
+    }
+
+    @keyframes pulseGreen {
+      from { transform: scale(1); }
+      to { transform: scale(1.03); }
+    }
+
+    .feedback-msg {
+      margin-top: 15px;
+      text-align: center;
+      font-size: 0.9rem;
+      color: #ef4444;
+      font-weight: 700;
+    }
+
+    .option-letter {
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      color: #fff;
+    }
+    .letra-A { background-color: #e74c3c; }
+    .letra-B { background-color: #3b82f6; }
+    .letra-C { background-color: #22c55e; }
+    .letra-D { background-color: #eab308; color: #000; }
+
+    .option-img-preview {
+      width: 44px;
+      height: 44px;
+      object-fit: contain;
+      border-radius: 6px;
+      border: 1px solid #fff;
+      background: #0f172a;
+      flex-shrink: 0;
+    }
+
+    /* PANTALLA ESPECIAL 1 RECOMPENSA CONSEGUIDA (FESTIVA) */
+    .single-gem-screen {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: radial-gradient(circle, rgba(15,23,42,0.96) 0%, rgba(0,0,0,0.99) 100%);
+      backdrop-filter: blur(12px);
+      z-index: 280;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      text-align: center;
+      gap: 18px;
+    }
+
+    .single-gem-card {
+      background: #1e293b;
+      border: 4px solid #ffcc00;
+      border-radius: 20px;
+      padding: 28px;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.95), 0 0 30px rgba(255, 204, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .single-gem-avatar-big {
+      width: 130px;
+      height: 140px;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      filter: drop-shadow(0 10px 15px rgba(0,0,0,0.8));
+    }
+
+    .single-gem-icon-big {
+      width: 100px;
+      height: 100px;
+      animation: bounceAvatar 1.2s infinite alternate ease-in-out;
+      filter: drop-shadow(0 0 10px #fff) drop-shadow(0 0 25px #00f3ff) drop-shadow(0 0 40px #ffcc00);
+    }
+
+    .single-gem-title {
+      font-family: 'Fredoka', sans-serif;
+      font-size: clamp(1.4rem, 3vw, 1.8rem);
+      color: #ffcc00;
+      text-shadow: 2px 2px #000;
+    }
+
+    .single-gem-desc {
+      font-size: clamp(0.9rem, 1.8vw, 1.05rem);
+      color: #38bdf8;
+      font-weight: 700;
+    }
+
+    /* PANTALLA DE RESULTATS FINALS (DERROTA O RESUM) */
+    .results-screen {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(10px);
+      z-index: 180;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .results-card {
+      background: #1e293b;
+      border: 4px solid #ffcc00;
+      border-radius: 16px;
+      padding: 25px;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.9);
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .results-title {
+      font-family: 'Fredoka', sans-serif;
+      font-size: clamp(1.4rem, 3.2vw, 2rem);
+      text-shadow: 3px 3px #000;
+    }
+    .results-title.win { color: #22c55e; }
+    .results-title.lose { color: #ef4444; }
+
+    .stats-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: #0f172a;
+      padding: 14px;
+      border-radius: 8px;
+      text-align: left;
+      font-size: 0.85rem;
+      line-height: 1.5;
+      font-weight: 600;
+    }
+
+    /* PANTALLA ESPECIAL 4 ELEMENTS COMPLETATS (GRAN FINAL) */
+    .all-gems-screen {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: radial-gradient(circle, rgba(15,23,42,0.96) 0%, rgba(0,0,0,0.99) 100%);
+      backdrop-filter: blur(12px);
+      z-index: 300;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      text-align: center;
+      gap: 16px;
+      overflow-y: auto;
+    }
+
+    .all-gems-title {
+      font-family: 'Fredoka', sans-serif;
+      font-size: clamp(1.6rem, 3.5vw, 2.6rem);
+      color: #ffcc00;
+      text-shadow: 3px 3px #e74c3c, 6px 6px #000;
+      animation: rainbowGlow 2s infinite alternate;
+    }
+
+    @keyframes rainbowGlow {
+      0% { filter: drop-shadow(0 0 10px #ffcc00); }
+      100% { filter: drop-shadow(0 0 25px #22c55e) brightness(1.2); }
+    }
+
+    .all-gems-avatar {
+      width: clamp(120px, 22vw, 180px);
+      height: clamp(130px, 25vw, 200px);
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      animation: bounceAvatar 1s infinite alternate ease-in-out;
+      filter: drop-shadow(0 0 25px #ffcc00);
+    }
+
+    @keyframes bounceAvatar {
+      from { transform: translateY(0) scale(1); }
+      to { transform: translateY(-12px) scale(1.08); }
+    }
+
+    .all-gems-grid-display {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: 5px 0;
+    }
+
+    .all-gems-display-item {
+      background: rgba(30, 41, 59, 0.9);
+      border: 2px solid #38bdf8;
+      border-radius: 12px;
+      padding: 10px;
+      width: 100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+    }
+
+    .all-gems-message {
+      font-size: clamp(0.85rem, 1.8vw, 1.1rem);
+      color: #38bdf8;
+      max-width: 600px;
+      line-height: 1.5;
+      text-shadow: 2px 2px #000;
+      font-weight: 700;
+    }
+
+    /* PANELL DE CONFIGURACIÓ */
+    .config-modal {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.92);
+      z-index: 250;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .config-container {
+      width: 100%;
+      max-width: 780px;
+      background: #1e293b;
+      border: 3px solid #ffcc00;
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      max-height: 90vh;
+    }
+
+    .config-tabs {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #334155;
+      padding-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      flex: 1;
+      min-width: 100px;
+      padding: 8px;
+      background: #0f172a;
+      border: 1px solid #475569;
+      color: #94a3b8;
+      cursor: pointer;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-family: 'Fredoka', sans-serif;
+      text-align: center;
+    }
+
+    .tab-btn.active {
+      background: #ffcc00;
+      color: #000;
+      font-weight: bold;
+      border-color: #ffcc00;
+    }
+
+    .tab-content {
+      display: none;
+      flex-direction: column;
+      gap: 15px;
+      overflow-y: auto;
+      padding-right: 5px;
+    }
+    .tab-content.active { display: flex; }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 0.85rem;
+      color: #ffcc00;
+      font-weight: 700;
+    }
+
+    .form-control {
+      padding: 10px;
+      background: #0f172a;
+      border: 1px solid #475569;
+      color: #fff;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-family: inherit;
+    }
+
+    textarea.form-control {
+      resize: vertical;
+      min-height: 120px;
+    }
+
+    .btn-action {
+      background: #22c55e;
+      color: #fff;
+      border: none;
+      padding: 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 0.9rem;
+      font-family: 'Fredoka', sans-serif;
+      transition: background 0.2s;
+    }
+    .btn-action:hover { background: #16a34a; }
+
+    .btn-close {
+      background: #ef4444;
+      margin-top: 15px;
+    }
+    .btn-close:hover { background: #dc2626; }
+
+    .q-item {
+      background: #0f172a;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #334155;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+    }
+
+    .q-item-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .q-item button {
+      border: none;
+      color: white;
+      padding: 5px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'Fredoka', sans-serif;
+    }
+
+    .btn-edit-q {
+      background: #eab308;
+      color: #000 !important;
+      font-weight: bold;
+    }
+
+    .btn-del-q {
+      background: #ef4444;
+    }
+
+    /* MODAL PIN DE SEGURETAT */
+    .pin-modal {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(5px);
+      z-index: 300;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .pin-container {
+      background: #1e293b;
+      border: 3px solid #ffcc00;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 360px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .pin-title {
+      font-family: 'Fredoka', sans-serif;
+      font-size: 1.1rem;
+      color: #ffcc00;
+    }
+
+    .pin-input {
+      font-size: 1.5rem;
+      letter-spacing: 12px;
+      text-align: center;
+      padding: 10px;
+      background: #0f172a;
+      border: 2px solid #38bdf8;
+      color: #fff;
+      border-radius: 8px;
+      font-family: monospace;
+      outline: none;
+    }
+
+    .pin-error {
+      color: #ef4444;
+      font-size: 0.8rem;
+      display: none;
+      font-weight: 700;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 5px;
+    }
+
+    .checkbox-row input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+  
+    .btn-lang-top {
+      position: absolute;
+      top: 15px;
+      right: 115px;
+      z-index: 200;
+      background: rgba(14, 165, 233, 0.85);
+      border: 2px solid #fff;
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-family: 'Fredoka', sans-serif;
+      transition: all 0.2s;
+    }
+    .btn-lang-top:hover { background: #0284c7; transform: translateY(-2px); }
+
+  
+    .btn-lang-top {
+      position: absolute;
+      top: 15px;
+      right: 115px;
+      z-index: 200;
+      background: rgba(14, 165, 233, 0.85);
+      border: 2px solid #fff;
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-family: 'Fredoka', sans-serif;
+      transition: all 0.2s;
+    }
+    .btn-lang-top:hover { background: #0284c7; transform: translateY(-2px); }
+
+  </style>
+</head>
+<body>
+
+  <!-- PANTALLA DE SELECCIÓ D'IDIOMA -->
+  <div class="lang-screen" id="lang-screen" style="display: none;">
+    <div class="lang-title" id="txt-lang-title">TRIA L'IDIOMA / SELECT LANGUAGE</div>
+    <div class="lang-subtitle" id="txt-lang-subtitle">Benvingut al Repte de les Pedres Elementals</div>
+    <div class="lang-buttons-grid">
+      <button class="btn-lang" onclick="setAppLanguage('va')">Valencià</button>
+      <button class="btn-lang" onclick="setAppLanguage('es')">Castellano</button>
+      <button class="btn-lang" onclick="setAppLanguage('en')">English</button>
+    </div>
+  </div>
+
+  <div id="game-container" style="background-image: url(&quot;https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&amp;fit=crop&amp;w=1200&amp;q=80&quot;);">
+    <button class="btn-exit-game" id="btn-exit-game" onclick="exitToStartScreen()" style="display: block;">❌ <span id="ui-exit">SORTIR</span></button>
+    <button class="btn-lang-top" id="btn-main-lang" onclick="openLanguageScreen()" style="display: block;">🌐 <span id="ui-lang-top-btn">IDIOMA</span></button>
+    <button class="btn-config" id="btn-main-config" onclick="requestConfigAccess()" style="display: block;">⚙️ <span id="ui-config-btn">CONFIG</span></button>
+
+    <!-- PANTALLA DE PRESENTACIÓ / SELECCIÓ DE NIVELL -->
+    <div class="start-screen" id="start-screen" style="display: none;">
+      <div class="start-title" id="ui-title">TEST</div>
+      <div class="start-subtitle">Miguel Castellá</div>
+
+      <div class="gems-tracker-start">
+        <div class="gems-tracker-title" id="ui-gems-tracker-title">✨ EL REPTE DE LES 4 PEDRES PRECIOSES ELEMENTALS:</div>
+        <div class="gems-grid" id="gems-tracker-grid"><div class="gem-item unlocked">
+          <div class="gem-icon" style="width: 46px; height: 46px;"><svg viewBox="0 0 100 100" width="100%" height="100%"><defs><radialGradient id="fg" cx="45%" cy="35%" r="65%"><stop offset="0%" stop-color="#ffae00"></stop><stop offset="40%" stop-color="#ff5500"></stop><stop offset="80%" stop-color="#ff1e00"></stop><stop offset="100%" stop-color="#990000"></stop></radialGradient><filter id="neonFoc" x="-35%" y="-35%" width="170%" height="170%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur1"></feGaussianBlur><feGaussianBlur in="SourceGraphic" stdDeviation="5.5" result="blur2"></feGaussianBlur><feMerge><feMergeNode in="blur2"></feMergeNode><feMergeNode in="blur1"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge></filter></defs><g filter="url(#neonFoc)"><polygon points="50,7 86,31 74,89 26,89 14,31" fill="url(#fg)" stroke="#ff8800" stroke-width="3.2"></polygon><polygon points="50,7 70,31 50,55 30,31" fill="#ff9e00" opacity="0.75"></polygon><path d="M50,20 Q62,48 50,82 Q38,48 50,20" fill="#ff7b00" stroke="#ffbe55" stroke-width="1.2" opacity="0.85"></path></g></svg></div>
+          <div class="gem-name">Rubí Ígneu (Foc Estel·lar)</div>
+        </div><div class="gem-item ">
+          <div class="gem-icon" style="width: 46px; height: 46px;"><svg viewBox="0 0 100 100" width="100%" height="100%"><defs><radialGradient id="ag" cx="35%" cy="35%" r="65%"><stop offset="0%" stop-color="#7df9ff"></stop><stop offset="40%" stop-color="#00bfff"></stop><stop offset="80%" stop-color="#0066ff"></stop><stop offset="100%" stop-color="#002299"></stop></radialGradient><filter id="neonAigua" x="-35%" y="-35%" width="170%" height="170%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur1"></feGaussianBlur><feGaussianBlur in="SourceGraphic" stdDeviation="5.5" result="blur2"></feGaussianBlur><feMerge><feMergeNode in="blur2"></feMergeNode><feMergeNode in="blur1"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge></filter></defs><g filter="url(#neonAigua)"><path d="M50,9 C50,9 81,42 81,62 C81,80 68,91 50,91 C32,91 19,80 19,62 C19,42 50,9 50,9 Z" fill="url(#ag)" stroke="#00f3ff" stroke-width="3.2"></path><path d="M42,25 C42,25 28,52 28,64 C28,72 35,78 42,78" fill="none" stroke="#99ffff" stroke-width="3.5" stroke-linecap="round" opacity="0.95"></path></g></svg></div>
+          <div class="gem-name">Safir Glacial (Aigua Abissal)</div>
+        </div><div class="gem-item ">
+          <div class="gem-icon" style="width: 46px; height: 46px;"><svg viewBox="0 0 100 100" width="100%" height="100%"><defs><linearGradient id="tg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#39ff14"></stop><stop offset="45%" stop-color="#00cc44"></stop><stop offset="72%" stop-color="#8b4513"></stop><stop offset="100%" stop-color="#4e2708"></stop></linearGradient><filter id="neonTerra" x="-35%" y="-35%" width="170%" height="170%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur1"></feGaussianBlur><feGaussianBlur in="SourceGraphic" stdDeviation="5.5" result="blur2"></feGaussianBlur><feMerge><feMergeNode in="blur2"></feMergeNode><feMergeNode in="blur1"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge></filter></defs><g filter="url(#neonTerra)"><polygon points="50,8 90,31 90,69 50,92 10,69 10,31" fill="url(#tg)" stroke="#39ff14" stroke-width="3.2"></polygon><polygon points="50,20 76,38 50,55 24,38" fill="#00ff66" opacity="0.75"></polygon><polygon points="24,38 50,55 65,74 35,74" fill="#8b4513" opacity="0.8"></polygon><polygon points="76,38 65,74 50,55" fill="#5c2e0e" opacity="0.85"></polygon></g></svg></div>
+          <div class="gem-name">Maragda Gaia (Terra Viva)</div>
+        </div><div class="gem-item ">
+          <div class="gem-icon" style="width: 46px; height: 46px;"><svg viewBox="0 0 100 100" width="100%" height="100%"><defs><radialGradient id="rg" cx="45%" cy="40%" r="60%"><stop offset="0%" stop-color="#ffffff"></stop><stop offset="48%" stop-color="#cceeff"></stop><stop offset="82%" stop-color="#38bdf8"></stop><stop offset="100%" stop-color="#0088cc"></stop></radialGradient><filter id="neonAire" x="-35%" y="-35%" width="170%" height="170%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur1"></feGaussianBlur><feGaussianBlur in="SourceGraphic" stdDeviation="5.5" result="blur2"></feGaussianBlur><feMerge><feMergeNode in="blur2"></feMergeNode><feMergeNode in="blur1"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge></filter></defs><g filter="url(#neonAire)"><circle cx="50" cy="50" r="41" fill="url(#rg)" stroke="#ffffff" stroke-width="3.5"></circle><path d="M22,50 Q38,32 54,50 T86,50" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round"></path><path d="M28,38 Q42,22 58,38" fill="none" stroke="#e0f7ff" stroke-width="3" stroke-linecap="round" opacity="0.95"></path><path d="M25,62 Q42,74 60,62" fill="none" stroke="#00e5ff" stroke-width="2.8" stroke-linecap="round" opacity="0.85"></path></g></svg></div>
+          <div class="gem-name">Diamant Eteri (Aire Celestial)</div>
+        </div></div>
+        <button class="btn-reset-gems" onclick="resetGemsProgress()" id="ui-reset-gems">🔄 Reiniciar Pedres</button>
+      </div>
+
+      <div class="start-buttons-group">
+        <button class="btn-start-menu" onclick="openCharSelect(false)" id="ui-level1">⚔️ NIVELL 1 (SENSE TEMPORITZADOR)</button>
+        <button class="btn-start-menu timer-btn" onclick="openCharSelect(true)" id="ui-level2">⏱️ NIVELL 2 (AMB TEMPORITZADOR)</button>
+        </div>
+    </div>
+
+    <!-- PANTALLA SELECCIÓ D'ELEMENT I PERSONATGE -->
+    <div class="char-select-screen" id="char-select-screen" style="display: flex;">
+      <div class="select-section-title" id="ui-select-gem-title">1. TRIA LA PEDRA PRECIOSA PER AQUEST COMBAT</div>
+      <div class="gem-select-grid" id="gem-select-container"><div class="gem-select-card already-unlocked">
+          <div style="width: 58px; height: 58px;"><svg viewBox="0 0 100 100" width="100%" height="100%"><defs><radialGradient id="fg" cx="45%" cy="35%" r="65%"><stop offset="0%" stop-color="#ffae00"></stop><stop offset="40%" stop-color="#ff5500"></stop><stop offset="80%" stop-color="#ff1e00"></stop><stop offset="100%" stop-color="#990000"></stop></radialGradient><filter id="neonFoc" x="-35%" y="-35%" width="170%" height="170%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur1"></feGaussianBlur><feGaussianBlur in="SourceGraphic" stdDeviation="5.5" result="blur2"></feGaussianBlur><feMerge><feMergeNode in="blur2"></feMergeNode><feMergeNode in="blur1"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge></filter></defs><g filter="url(#neonFoc)"><polygon points="50,7 86,31 74,89 26,89 14,31" fill="url(#fg)" stroke="#ff8800" stroke-width="3.2"></polygon><polygon points="50,7 70,31 50,55 30,31" fill="#ff9e00" opacity="0.75"></polygon><path d="M50,20 Q62,48 50,82 Q38,48 50,20" fill="#ff7b00" stroke="#ffbe55" stroke-width="1.2" opacity="0.85"></path></g></svg></div>
+          <div style="font-size: 0.6rem; color: #fff; font-weight: bold; text-align: center;">Rubí Ígneu (Foc Estel·lar)</div>
+          <div style="font-size: 0.5rem; color: #22c55e;">
+            ACONSEGUIT 🏆
+          </div>
+        </div><div class="gem-select-card selected">
+          <div style="width: 58px; height: 58px;"><svg viewBox="0 0 100 100" width="100%" height="100%"><defs><radialGradient id="ag" cx="35%" cy="35%" r="65%"><stop offset="0%" stop-color="#7df9ff"></stop><stop offset="40%" stop-color="#00bfff"></stop><stop offset="80%" stop-color="#0066ff"></stop><stop offset="100%" stop-color="#002299"></stop></radialGradient><filter id="neonAigua" x="-35%" y="-35%" width="170%" height="170%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur1"></feGaussianBlur><feGaussianBlur in="SourceGraphic" stdDeviation="5.5" result="blur2"></feGaussianBlur><feMerge><feMergeNode in="blur2"></feMergeNode><feMergeNode in="blur1"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge></filter></defs><g filter="url(#neonAigua)"><path d="M50,9 C50,9 81,42 81,62 C81,80 68,91 50,91 C32,91 19,80 19,62 C19,42 50,9 50,9 Z" fill="url(#ag)" stroke="#00f3ff" stroke-width="3.2"></path><path d="M42,25 C42,25 28,52 28,64 C28,72 35,78 42,78" fill="none" stroke="#99ffff" stroke-width="3.5" stroke-linecap="round" opacity="0.95"></path></g></svg></div>
+          <div style="font-size: 0.6rem; color: #fff; font-weight: bold; text-align: center;">Safir Glacial (Aigua Abissal)</div>
+          <div style="font-size: 0.5rem; color: #ffcc00;">
+            PENDENT 🔒
+          </div>
+        </div><div class="gem-select-card">
+          <div style="width: 58px; height: 58px;"><svg viewBox="0 0 100 100" width="100%" height="100%"><defs><linearGradient id="tg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#39ff14"></stop><stop offset="45%" stop-color="#00cc44"></stop><stop offset="72%" stop-color="#8b4513"></stop><stop offset="100%" stop-color="#4e2708"></stop></linearGradient><filter id="neonTerra" x="-35%" y="-35%" width="170%" height="170%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur1"></feGaussianBlur><feGaussianBlur in="SourceGraphic" stdDeviation="5.5" result="blur2"></feGaussianBlur><feMerge><feMergeNode in="blur2"></feMergeNode><feMergeNode in="blur1"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge></filter></defs><g filter="url(#neonTerra)"><polygon points="50,8 90,31 90,69 50,92 10,69 10,31" fill="url(#tg)" stroke="#39ff14" stroke-width="3.2"></polygon><polygon points="50,20 76,38 50,55 24,38" fill="#00ff66" opacity="0.75"></polygon><polygon points="24,38 50,55 65,74 35,74" fill="#8b4513" opacity="0.8"></polygon><polygon points="76,38 65,74 50,55" fill="#5c2e0e" opacity="0.85"></polygon></g></svg></div>
+          <div style="font-size: 0.6rem; color: #fff; font-weight: bold; text-align: center;">Maragda Gaia (Terra Viva)</div>
+          <div style="font-size: 0.5rem; color: #ffcc00;">
+            PENDENT 🔒
+          </div>
+        </div><div class="gem-select-card">
+          <div style="width: 58px; height: 58px;"><svg viewBox="0 0 100 100" width="100%" height="100%"><defs><radialGradient id="rg" cx="45%" cy="40%" r="60%"><stop offset="0%" stop-color="#ffffff"></stop><stop offset="48%" stop-color="#cceeff"></stop><stop offset="82%" stop-color="#38bdf8"></stop><stop offset="100%" stop-color="#0088cc"></stop></radialGradient><filter id="neonAire" x="-35%" y="-35%" width="170%" height="170%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur1"></feGaussianBlur><feGaussianBlur in="SourceGraphic" stdDeviation="5.5" result="blur2"></feGaussianBlur><feMerge><feMergeNode in="blur2"></feMergeNode><feMergeNode in="blur1"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge></filter></defs><g filter="url(#neonAire)"><circle cx="50" cy="50" r="41" fill="url(#rg)" stroke="#ffffff" stroke-width="3.5"></circle><path d="M22,50 Q38,32 54,50 T86,50" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round"></path><path d="M28,38 Q42,22 58,38" fill="none" stroke="#e0f7ff" stroke-width="3" stroke-linecap="round" opacity="0.95"></path><path d="M25,62 Q42,74 60,62" fill="none" stroke="#00e5ff" stroke-width="2.8" stroke-linecap="round" opacity="0.85"></path></g></svg></div>
+          <div style="font-size: 0.6rem; color: #fff; font-weight: bold; text-align: center;">Diamant Eteri (Aire Celestial)</div>
+          <div style="font-size: 0.5rem; color: #ffcc00;">
+            PENDENT 🔒
+          </div>
+        </div></div>
+
+      <div class="select-section-title" id="ui-select-char-title">2. TRIA EL TEU PERSONATGE</div>
+      <div class="char-cards-container">
+        <div class="char-card selected" id="card-p1a" onclick="selectFighter(1)">
+          <div class="char-card-avatar" id="select-avatar-p1a" style="background-image: url(&quot;https://static.wixstatic.com/media/a6e1f9_84dddab5f02b4d1eb0c1b019722a58e1~mv2.png/v1/fill/w_264,h_326,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/a6e1f9_84dddab5f02b4d1eb0c1b019722a58e1~mv2.png&quot;);"></div>
+          <div class="char-card-name" id="select-name-p1a">Hemione</div>
+        </div>
+        <div class="char-card" id="card-p1b" onclick="selectFighter(2)">
+          <div class="char-card-avatar" id="select-avatar-p1b" style="background-image: url(&quot;https://static.wixstatic.com/media/a6e1f9_f1e92c04c35740fa9da65b0624e82dda~mv2.png/v1/fill/w_264,h_326,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/a6e1f9_f1e92c04c35740fa9da65b0624e82dda~mv2.png&quot;);"></div>
+          <div class="char-card-name" id="select-name-p1b">Harry Potter</div>
+        </div>
+      </div>
+
+      <button class="btn-start-menu" style="margin-top: 10px;" onclick="confirmSelectionAndStart()" id="ui-enter-combat">🔥 ENTRAR AL COMBAT</button>
+    </div>
+
+    <!-- HUD BARRES DE VIDA -->
+    <div class="hud">
+      <div class="fighter-hud">
+        <div class="fighter-name" id="name-p1">Hemione</div>
+        <div class="fighter-hud-row">
+          <div class="hud-avatar" id="hud-avatar-p1" style="background-image: url(&quot;https://static.wixstatic.com/media/a6e1f9_84dddab5f02b4d1eb0c1b019722a58e1~mv2.png/v1/fill/w_264,h_326,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/a6e1f9_84dddab5f02b4d1eb0c1b019722a58e1~mv2.png&quot;);"></div>
+          <div class="fighter-info-col">
+            <div class="health-bar-container">
+              <div class="health-bar" id="hp-p1" style="width: 100%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="timer-container">
+        <div class="timer-box" id="match-timer">VS</div>
+        <div class="hud-gems-bar" id="hud-gems-bar"><div class="hud-gem-slot unlocked" title="Rubí Ígneu (Foc Estel·lar)" style="width: 32px; height: 32px;"><svg viewBox="0 0 100 100" width="100%" height="100%"><defs><radialGradient id="fg" cx="45%" cy="35%" r="65%"><stop offset="0%" stop-color="#ffae00"></stop><stop offset="40%" stop-color="#ff5500"></stop><stop offset="80%" stop-color="#ff1e00"></stop><stop offset="100%" stop-color="#990000"></stop></radialGradient><filter id="neonFoc" x="-35%" y="-35%" width="170%" height="170%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur1"></feGaussianBlur><feGaussianBlur in="SourceGraphic" stdDeviation="5.5" result="blur2"></feGaussianBlur><feMerge><feMergeNode in="blur2"></feMergeNode><feMergeNode in="blur1"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge></filter></defs><g filter="url(#neonFoc)"><polygon points="50,7 86,31 74,89 26,89 14,31" fill="url(#fg)" stroke="#ff8800" stroke-width="3.2"></polygon><polygon points="50,7 70,31 50,55 30,31" fill="#ff9e00" opacity="0.75"></polygon><path d="M50,20 Q62,48 50,82 Q38,48 50,20" fill="#ff7b00" stroke="#ffbe55" stroke-width="1.2" opacity="0.85"></path></g></svg></div><div class="hud-gem-slot current-target" title="Safir Glacial (Aigua Abissal)" style="width: 32px; height: 32px;"><svg viewBox="0 0 100 100" width="100%" height="100%"><defs><radialGradient id="ag" cx="35%" cy="35%" r="65%"><stop offset="0%" stop-color="#7df9ff"></stop><stop offset="40%" stop-color="#00bfff"></stop><stop offset="80%" stop-color="#0066ff"></stop><stop offset="100%" stop-color="#002299"></stop></radialGradient><filter id="neonAigua" x="-35%" y="-35%" width="170%" height="170%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur1"></feGaussianBlur><feGaussianBlur in="SourceGraphic" stdDeviation="5.5" result="blur2"></feGaussianBlur><feMerge><feMergeNode in="blur2"></feMergeNode><feMergeNode in="blur1"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge></filter></defs><g filter="url(#neonAigua)"><path d="M50,9 C50,9 81,42 81,62 C81,80 68,91 50,91 C32,91 19,80 19,62 C19,42 50,9 50,9 Z" fill="url(#ag)" stroke="#00f3ff" stroke-width="3.2"></path><path d="M42,25 C42,25 28,52 28,64 C28,72 35,78 42,78" fill="none" stroke="#99ffff" stroke-width="3.5" stroke-linecap="round" opacity="0.95"></path></g></svg></div><div class="hud-gem-slot" title="Maragda Gaia (Terra Viva)" style="width: 32px; height: 32px;"><svg viewBox="0 0 100 100" width="100%" height="100%"><defs><linearGradient id="tg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#39ff14"></stop><stop offset="45%" stop-color="#00cc44"></stop><stop offset="72%" stop-color="#8b4513"></stop><stop offset="100%" stop-color="#4e2708"></stop></linearGradient><filter id="neonTerra" x="-35%" y="-35%" width="170%" height="170%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur1"></feGaussianBlur><feGaussianBlur in="SourceGraphic" stdDeviation="5.5" result="blur2"></feGaussianBlur><feMerge><feMergeNode in="blur2"></feMergeNode><feMergeNode in="blur1"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge></filter></defs><g filter="url(#neonTerra)"><polygon points="50,8 90,31 90,69 50,92 10,69 10,31" fill="url(#tg)" stroke="#39ff14" stroke-width="3.2"></polygon><polygon points="50,20 76,38 50,55 24,38" fill="#00ff66" opacity="0.75"></polygon><polygon points="24,38 50,55 65,74 35,74" fill="#8b4513" opacity="0.8"></polygon><polygon points="76,38 65,74 50,55" fill="#5c2e0e" opacity="0.85"></polygon></g></svg></div><div class="hud-gem-slot" title="Diamant Eteri (Aire Celestial)" style="width: 32px; height: 32px;"><svg viewBox="0 0 100 100" width="100%" height="100%"><defs><radialGradient id="rg" cx="45%" cy="40%" r="60%"><stop offset="0%" stop-color="#ffffff"></stop><stop offset="48%" stop-color="#cceeff"></stop><stop offset="82%" stop-color="#38bdf8"></stop><stop offset="100%" stop-color="#0088cc"></stop></radialGradient><filter id="neonAire" x="-35%" y="-35%" width="170%" height="170%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur1"></feGaussianBlur><feGaussianBlur in="SourceGraphic" stdDeviation="5.5" result="blur2"></feGaussianBlur><feMerge><feMergeNode in="blur2"></feMergeNode><feMergeNode in="blur1"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge></filter></defs><g filter="url(#neonAire)"><circle cx="50" cy="50" r="41" fill="url(#rg)" stroke="#ffffff" stroke-width="3.5"></circle><path d="M22,50 Q38,32 54,50 T86,50" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round"></path><path d="M28,38 Q42,22 58,38" fill="none" stroke="#e0f7ff" stroke-width="3" stroke-linecap="round" opacity="0.95"></path><path d="M25,62 Q42,74 60,62" fill="none" stroke="#00e5ff" stroke-width="2.8" stroke-linecap="round" opacity="0.85"></path></g></svg></div></div>
+      </div>
+
+      <div class="fighter-hud right">
+        <div class="fighter-name" id="name-p2">Voldemort</div>
+        <div class="fighter-hud-row">
+          <div class="hud-avatar" id="hud-avatar-p2" style="background-image: url(&quot;https://static.wixstatic.com/media/a6e1f9_970bcdedce5c4088b0c5fe445ecef959~mv2.png/v1/fill/w_264,h_326,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/a6e1f9_970bcdedce5c4088b0c5fe445ecef959~mv2.png&quot;);"></div>
+          <div class="fighter-info-col">
+            <div class="health-bar-container right">
+              <div class="health-bar" id="hp-p2" style="width: 100%;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ESCENARI DE LLUITA -->
+    <div class="stage" id="stage-area">
+      <div class="character" id="char-p1" style="background-image: url(&quot;https://static.wixstatic.com/media/a6e1f9_84dddab5f02b4d1eb0c1b019722a58e1~mv2.png/v1/fill/w_264,h_326,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/a6e1f9_84dddab5f02b4d1eb0c1b019722a58e1~mv2.png&quot;);"></div>
+      <div class="character" id="char-p2" style="background-image: url(&quot;https://static.wixstatic.com/media/a6e1f9_970bcdedce5c4088b0c5fe445ecef959~mv2.png/v1/fill/w_264,h_326,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/a6e1f9_970bcdedce5c4088b0c5fe445ecef959~mv2.png&quot;);"></div>
+    </div>
+
+    <!-- MODAL POP-UP PREGUNTA -->
+    <div class="modal-overlay" id="quiz-modal" style="display: none;">
+      <div class="modal-quiz">
+        <div class="question-timer-text" id="question-timer-text">⏳ Temps: 10s</div>
+        <div class="question-timer-bar-container" id="question-timer-bar-container">
+          <div class="question-timer-bar" id="question-timer-bar"></div>
+        </div>
+
+        <div class="question-title" id="quiz-question"></div>
+        <div class="question-image-container" id="quiz-img-container" style="display: none;">
+          <img id="quiz-question-img" class="question-image" src="" alt="Imatge de la pregunta">
+        </div>
+        <div class="question-audio-container" id="quiz-audio-container" style="display: none;">
+          <audio id="quiz-question-audio" class="question-audio" controls="" src=""></audio>
+        </div>
+        <div class="options-grid" id="quiz-options"></div>
+        <div class="feedback-msg" id="feedback-msg" style="display: none;"></div>
+      </div>
+    </div>
+
+    <!-- PANTALLA RECOMPENSA CONSEGUIDA -->
+    <div class="single-gem-screen" id="single-gem-screen" style="display: none;">
+      <div class="single-gem-card">
+        <div class="single-gem-title" id="single-gem-title-text">🌟 RECOMPENSA CONSEGUIDA! 🌟</div>
+        <div style="display: flex; gap: 20px; align-items: center; justify-content: center;">
+          <div class="single-gem-avatar-big" id="single-gem-avatar"></div>
+          <div class="single-gem-icon-big" id="single-gem-svg-icon"></div>
+        </div>
+        <div class="single-gem-desc" id="single-gem-desc-text"></div>
+        <button class="btn-action" style="padding: 12px 24px; font-size: 0.95rem; width: 100%;" onclick="closeSingleGemCelebration()" id="ui-continue-btn">✨ CONTINUAR</button>
+      </div>
+    </div>
+
+    <!-- PANTALLA DE RESULTATS FINALS -->
+    <div class="results-screen" id="results-screen" style="display: none;">
+      <div class="results-card">
+        <div class="results-title" id="results-title">VICTÒRIA!</div>
+        <div class="stats-grid">
+          <div>🎯 <span id="ui-stat-correct">Encerts</span>: <b id="stat-correct" style="color: #22c55e;">0</b></div>
+          <div>❌ <span id="ui-stat-wrong">Fallades</span>: <b id="stat-wrong" style="color: #ef4444;">0</b></div>
+          <div>📊 <span id="ui-stat-accuracy">Precisió</span>: <b id="stat-accuracy" style="color: #38bdf8;">0%</b></div>
+          <div>⏱️ <span id="ui-stat-time">Temps Total</span>: <b id="stat-time" style="color: #fff;">0s</b></div>
+        </div>
+        <button class="btn-action" onclick="exitToStartScreen()" id="ui-return-start">🔄 TORNAR A L'INICI</button>
+      </div>
+    </div>
+
+    <!-- PANTALLA 4 ELEMENTS COMPLETATS -->
+    <div class="all-gems-screen" id="all-gems-screen" style="display: none;">
+      <div class="all-gems-title" id="ui-all-gems-title">🌟 ENHORABONA! 🌟</div>
+      <div class="all-gems-avatar" id="all-gems-avatar"></div>
+      <div class="all-gems-grid-display" id="all-gems-display-container"></div>
+      <div class="all-gems-message" id="all-gems-message"></div>
+      <button class="btn-action" style="padding: 14px 28px; font-size: 1rem;" onclick="closeAllGemsCelebration()" id="ui-return-menu">🎉 TORNAR AL MENÚ</button>
+    </div>
+
+    <!-- MODAL PIN CONFIGURACIÓ -->
+    <div class="pin-modal" id="pin-modal" style="display: none;">
+      <div class="pin-container">
+        <div class="pin-title" id="ui-pin-title">🔒 ACCÉS A CONFIGURACIÓ</div>
+        <p style="font-size: 0.75rem; color: #94a3b8; font-weight: 600;" id="ui-pin-subtitle">Introdueix la contrasenya de 4 xifres:</p>
+        <input type="password" id="pin-input" class="pin-input" maxlength="4" placeholder="••••" autocomplete="off" onkeyup="if(event.key==='Enter') verifyPin()">
+        <div class="pin-error" id="pin-error" style="display: none;">❌ Contrasenya incorrecta</div>
+        <div style="display: flex; gap: 10px;">
+          <button class="btn-action" style="flex: 1; background: #22c55e;" onclick="verifyPin()">OK</button>
+          <button class="btn-action" style="flex: 1; background: #ef4444;" onclick="closePinModal()" id="ui-pin-cancel">CANCEL·LAR</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANELL DE CONFIGURACIÓ -->
+    <div class="config-modal" id="config-modal" style="display: flex;">
+      <div class="config-container">
+        <div class="config-tabs">
+          <button class="tab-btn active" onclick="switchTab(1)" id="ui-tab1">1. DESAR/CARREGAR</button>
+          <button class="tab-btn" onclick="switchTab(2)" id="ui-tab2">2. PERSONATGES</button>
+          <button class="tab-btn" onclick="switchTab(3)" id="ui-tab3">3. DANY COMBAT</button>
+          <button class="tab-btn" onclick="switchTab(4)" id="ui-tab4">4. PREGUNTES</button>
+          <button class="tab-btn" onclick="switchTab(5)" id="ui-tab5">5. TEMPORITZADOR</button>
+        </div>
+
+        <div class="tab-content active" id="tab-1">
+          <div class="form-group" style="background: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #38bdf8; gap: 12px;">
+            <label style="color: #38bdf8; font-size: 0.9rem;" id="ui-cfg-save-title">💾 Gestió de Fitxers de Configuració:</label>
+            <p style="font-size: 0.8rem; color: #94a3b8; line-height: 1.4;" id="ui-cfg-save-desc">Pots guardar tots els teus ajustos, preguntes i personatges en un fitxer JSON o descarregar l'aplicació HTML sencera ja configurada.</p>
+            <button class="btn-action" style="background: #2563eb;" onclick="exportConfigJson()" id="ui-btn-export-json">📥 Descarregar Fitxer de Configuració (JSON)</button>
+            <button class="btn-action" style="background: #d97706; margin-top: 4px;" onclick="exportStandaloneHtml()" id="ui-btn-export-html">🌐 Descarregar Aplicació HTML Autònoma</button>
+            <div style="margin-top: 10px;">
+              <label style="font-size: 0.8rem; color: #ffcc00; display: block; margin-bottom: 5px;" id="ui-cfg-load-label">Carregar fitxer JSON guardat:</label>
+              <input type="file" accept=".json" class="form-control" onchange="importConfigJson(event)">
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-content" id="tab-2">
+          <div class="form-group">
+            <label id="ui-lbl-p1a">Nom Personatge 1A:</label>
+            <input type="text" id="cfg-name-p1a" class="form-control">
+          </div>
+          <div class="form-group">
+            <label id="ui-lbl-img1a">Imatge Personatge 1A (URL o fitxer):</label>
+            <input type="text" id="cfg-img-p1a" class="form-control">
+            <input type="file" accept="image/*" onchange="uploadImg(event, 'cfg-img-p1a')">
+          </div>
+          <hr style="border-color: #334155; margin: 10px 0;">
+          <div class="form-group">
+            <label id="ui-lbl-p1b">Nom Personatge 1B (Segon Personatge Alumne):</label>
+            <input type="text" id="cfg-name-p1b" class="form-control">
+          </div>
+          <div class="form-group">
+            <label id="ui-lbl-img1b">Imatge Personatge 1B (URL o fitxer):</label>
+            <input type="text" id="cfg-img-p1b" class="form-control">
+            <input type="file" accept="image/*" onchange="uploadImg(event, 'cfg-img-p1b')">
+          </div>
+          <hr style="border-color: #334155; margin: 10px 0;">
+          <div class="form-group">
+            <label id="ui-lbl-p2">Nom Oponent:</label>
+            <input type="text" id="cfg-name-p2" class="form-control">
+          </div>
+          <div class="form-group">
+            <label id="ui-lbl-img2">Imatge Oponent (URL o fitxer):</label>
+            <input type="text" id="cfg-img-p2" class="form-control">
+            <input type="file" accept="image/*" onchange="uploadImg(event, 'cfg-img-p2')">
+          </div>
+          <hr style="border-color: #334155; margin: 10px 0;">
+          <div class="form-group">
+            <label id="ui-lbl-bg">Imatge de Fons Escenari (URL o fitxer):</label>
+            <input type="text" id="cfg-bg-img" class="form-control">
+            <input type="file" accept="image/*" onchange="uploadImg(event, 'cfg-bg-img')">
+          </div>
+        </div>
+
+        <div class="tab-content" id="tab-3">
+          <div class="form-group">
+            <label id="ui-lbl-dmg-deal">Dany que fas en encertar una pregunta normal (HP):</label>
+            <input type="number" id="cfg-damage-deal" class="form-control" min="5" max="100">
+          </div>
+          <div class="form-group">
+            <label id="ui-lbl-dmg-super">Dany del SUPER COMBO en rua de 5 encerts (HP):</label>
+            <input type="number" id="cfg-damage-super" class="form-control" min="10" max="100">
+          </div>
+          <div class="form-group">
+            <label id="ui-lbl-dmg-rec">Dany que et fan en fallar (HP):</label>
+            <input type="number" id="cfg-damage-receive" class="form-control" min="5" max="100">
+          </div>
+        </div>
+
+        <div class="tab-content" id="tab-4">
+          <div class="form-group" style="background: #0f172a; padding: 12px; border-radius: 8px; border: 1px solid #38bdf8;">
+            <label style="color: #38bdf8;" id="ui-lbl-bulk">📋 Importar Preguntes en Bloc (Copiar i Enganxar):</label>
+            <textarea id="bulk-import-text" class="form-control" placeholder="Quina és la capital de Catalunya?
+[IMG: https://exemple.com/mapa.jpg]
+[AUDIO: https://exemple.com/so.mp3]
+*A) Barcelona
+B) Girona
+C) Lleida
+D) Tarragona"></textarea>
+            <button class="btn-action" style="margin-top: 8px; background: #0284c7;" onclick="importBulkQuestions()" id="ui-btn-import">📥 IMPORTAR TEXT</button>
+          </div>
+          <hr style="border-color: #334155; margin: 10px 0;">
+          <div class="form-group" style="background: #0f172a; padding: 12px; border-radius: 8px; border: 1px solid #ffcc00;">
+            <label id="form-q-title" style="color: #ffcc00; font-size: 0.9rem;">Afegir una pregunta manualment:</label>
+            <input type="hidden" id="edit-q-index" value="-1">
+            <div class="form-group">
+              <label id="ui-lbl-qtext">Text de la pregunta:</label>
+              <input type="text" id="new-q-text" class="form-control" placeholder="Text de la pregunta">
+            </div>
+            <div class="form-group">
+              <label id="ui-lbl-qimg">Imatge de la pregunta (URL o fitxer) *opcional:</label>
+              <input type="text" id="new-q-img" class="form-control" placeholder="https://exemple.com/imatge.png">
+              <input type="file" accept="image/*" onchange="uploadImg(event, 'new-q-img')">
+            </div>
+            <div class="form-group">
+              <label id="ui-lbl-qaudio">URL del so de la pregunta *opcional:</label>
+              <input type="text" id="new-q-audio" class="form-control" placeholder="https://exemple.com/audio.mp3">
+            </div>
+            
+            <div style="background: #1e293b; padding: 10px; border-radius: 6px; margin-top: 5px; border: 1px solid #334155;">
+              <label style="color: #22c55e; font-size: 0.8rem; margin-bottom: 6px; display: block;" id="ui-lbl-optA">Opció A (Correcta):</label>
+              <div style="display: flex; gap: 8px; margin-bottom: 6px;">
+                <input type="text" id="new-q-opt0" class="form-control" placeholder="Text opció A" style="flex: 2;">
+                <input type="text" id="new-q-opt0-img" class="form-control" placeholder="URL imatge opció A (opcional)" style="flex: 2;">
+              </div>
+              <input type="file" accept="image/*" onchange="uploadImg(event, 'new-q-opt0-img')" style="font-size: 0.75rem;">
+            </div>
+
+            <div style="background: #1e293b; padding: 10px; border-radius: 6px; margin-top: 5px; border: 1px solid #334155;">
+              <label style="color: #3b82f6; font-size: 0.8rem; margin-bottom: 6px; display: block;" id="ui-lbl-optB">Opció B (Incorrecta):</label>
+              <div style="display: flex; gap: 8px; margin-bottom: 6px;">
+                <input type="text" id="new-q-opt1" class="form-control" placeholder="Text opció B" style="flex: 2;">
+                <input type="text" id="new-q-opt1-img" class="form-control" placeholder="URL imatge opció B (opcional)" style="flex: 2;">
+              </div>
+              <input type="file" accept="image/*" onchange="uploadImg(event, 'new-q-opt1-img')" style="font-size: 0.75rem;">
+            </div>
+
+            <div style="background: #1e293b; padding: 10px; border-radius: 6px; margin-top: 5px; border: 1px solid #334155;">
+              <label style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 6px; display: block;" id="ui-lbl-optC">Opció C (Incorrecta - opcional):</label>
+              <div style="display: flex; gap: 8px; margin-bottom: 6px;">
+                <input type="text" id="new-q-opt2" class="form-control" placeholder="Text opció C" style="flex: 2;">
+                <input type="text" id="new-q-opt2-img" class="form-control" placeholder="URL imatge opció C (opcional)" style="flex: 2;">
+              </div>
+              <input type="file" accept="image/*" onchange="uploadImg(event, 'new-q-opt2-img')" style="font-size: 0.75rem;">
+            </div>
+
+            <div style="background: #1e293b; padding: 10px; border-radius: 6px; margin-top: 5px; border: 1px solid #334155;">
+              <label style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 6px; display: block;" id="ui-lbl-optD">Opció D (Incorrecta - opcional):</label>
+              <div style="display: flex; gap: 8px; margin-bottom: 6px;">
+                <input type="text" id="new-q-opt3" class="form-control" placeholder="Text opció D" style="flex: 2;">
+                <input type="text" id="new-q-opt3-img" class="form-control" placeholder="URL imatge opció D (opcional)" style="flex: 2;">
+              </div>
+              <input type="file" accept="image/*" onchange="uploadImg(event, 'new-q-opt3-img')" style="font-size: 0.75rem;">
+            </div>
+
+            <div style="display: flex; gap: 8px; margin-top: 12px;">
+              <button class="btn-action" id="btn-save-q" style="flex: 1;" onclick="addOrUpdateQuestion()">+ AFEGIR PREGUNTA</button>
+              <button class="btn-action" id="btn-cancel-edit-q" style="flex: 1; background: #64748b; display: none;" onclick="resetQuestionForm()">CANCEL·LAR EDICIÓ</button>
+            </div>
+          </div>
+          <label style="color: #ffcc00; font-size: 0.85rem; margin-top: 15px;" id="ui-lbl-qlist">Llista de Preguntes Actuals:</label>
+          <div id="questions-list" style="display: flex; flex-direction: column; gap: 8px;"><div class="q-item">
+          <span><b>1.</b> Nom de la veu femenina més aguda: <i>(4 opcions)</i></span>
+          <div class="q-item-actions">
+            <button class="btn-edit-q" onclick="editQuestion(0)">✏️ Editar</button>
+            <button class="btn-del-q" onclick="removeQuestion(0)">🗑️ Esborrar</button>
+          </div>
+        </div><div class="q-item">
+          <span><b>2.</b> Nom de la veu femenina mitja: <i>(4 opcions)</i></span>
+          <div class="q-item-actions">
+            <button class="btn-edit-q" onclick="editQuestion(1)">✏️ Editar</button>
+            <button class="btn-del-q" onclick="removeQuestion(1)">🗑️ Esborrar</button>
+          </div>
+        </div><div class="q-item">
+          <span><b>3.</b> Nom de la veu femenina greu: <i>(4 opcions)</i></span>
+          <div class="q-item-actions">
+            <button class="btn-edit-q" onclick="editQuestion(2)">✏️ Editar</button>
+            <button class="btn-del-q" onclick="removeQuestion(2)">🗑️ Esborrar</button>
+          </div>
+        </div><div class="q-item">
+          <span><b>4.</b> Nom de la veu masculina més aguda: <i>(4 opcions)</i></span>
+          <div class="q-item-actions">
+            <button class="btn-edit-q" onclick="editQuestion(3)">✏️ Editar</button>
+            <button class="btn-del-q" onclick="removeQuestion(3)">🗑️ Esborrar</button>
+          </div>
+        </div><div class="q-item">
+          <span><b>5.</b> Nom de la veu masculina aguda: <i>(4 opcions)</i></span>
+          <div class="q-item-actions">
+            <button class="btn-edit-q" onclick="editQuestion(4)">✏️ Editar</button>
+            <button class="btn-del-q" onclick="removeQuestion(4)">🗑️ Esborrar</button>
+          </div>
+        </div><div class="q-item">
+          <span><b>6.</b> Nom de la veu masculina mitja: <i>(4 opcions)</i></span>
+          <div class="q-item-actions">
+            <button class="btn-edit-q" onclick="editQuestion(5)">✏️ Editar</button>
+            <button class="btn-del-q" onclick="removeQuestion(5)">🗑️ Esborrar</button>
+          </div>
+        </div><div class="q-item">
+          <span><b>7.</b> Nom de la veu masculina greu: <i>(4 opcions)</i></span>
+          <div class="q-item-actions">
+            <button class="btn-edit-q" onclick="editQuestion(6)">✏️ Editar</button>
+            <button class="btn-del-q" onclick="removeQuestion(6)">🗑️ Esborrar</button>
+          </div>
+        </div><div class="q-item">
+          <span><b>8.</b> Noms de les tres veus femenines: <i>(4 opcions)</i></span>
+          <div class="q-item-actions">
+            <button class="btn-edit-q" onclick="editQuestion(7)">✏️ Editar</button>
+            <button class="btn-del-q" onclick="removeQuestion(7)">🗑️ Esborrar</button>
+          </div>
+        </div><div class="q-item">
+          <span><b>9.</b> Noms de les veus masculines: <i>(4 opcions)</i></span>
+          <div class="q-item-actions">
+            <button class="btn-edit-q" onclick="editQuestion(8)">✏️ Editar</button>
+            <button class="btn-del-q" onclick="removeQuestion(8)">🗑️ Esborrar</button>
+          </div>
+        </div><div class="q-item">
+          <span><b>10.</b> Nom d’un cor de veus de dona: <i>(4 opcions)</i></span>
+          <div class="q-item-actions">
+            <button class="btn-edit-q" onclick="editQuestion(9)">✏️ Editar</button>
+            <button class="btn-del-q" onclick="removeQuestion(9)">🗑️ Esborrar</button>
+          </div>
+        </div><div class="q-item">
+          <span><b>11.</b> Nom d’un cor de veus d’home: <i>(4 opcions)</i></span>
+          <div class="q-item-actions">
+            <button class="btn-edit-q" onclick="editQuestion(10)">✏️ Editar</button>
+            <button class="btn-del-q" onclick="removeQuestion(10)">🗑️ Esborrar</button>
+          </div>
+        </div><div class="q-item">
+          <span><b>12.</b> Nom d’un cor de veus de xiquets/es: <i>(4 opcions)</i></span>
+          <div class="q-item-actions">
+            <button class="btn-edit-q" onclick="editQuestion(11)">✏️ Editar</button>
+            <button class="btn-del-q" onclick="removeQuestion(11)">🗑️ Esborrar</button>
+          </div>
+        </div><div class="q-item">
+          <span><b>13.</b> Nom d’un cor de veus d’home i de dona: <i>(4 opcions)</i></span>
+          <div class="q-item-actions">
+            <button class="btn-edit-q" onclick="editQuestion(12)">✏️ Editar</button>
+            <button class="btn-del-q" onclick="removeQuestion(12)">🗑️ Esborrar</button>
+          </div>
+        </div><div class="q-item">
+          <span><b>14.</b> Veus d’un cor tradicional: <i>(4 opcions)</i></span>
+          <div class="q-item-actions">
+            <button class="btn-edit-q" onclick="editQuestion(13)">✏️ Editar</button>
+            <button class="btn-del-q" onclick="removeQuestion(13)">🗑️ Esborrar</button>
+          </div>
+        </div><div class="q-item">
+          <span><b>15.</b> Quina veu no és femenina: <i>(4 opcions)</i></span>
+          <div class="q-item-actions">
+            <button class="btn-edit-q" onclick="editQuestion(14)">✏️ Editar</button>
+            <button class="btn-del-q" onclick="removeQuestion(14)">🗑️ Esborrar</button>
+          </div>
+        </div><div class="q-item">
+          <span><b>16.</b> Quina veu no és femenina: <i>(4 opcions)</i></span>
+          <div class="q-item-actions">
+            <button class="btn-edit-q" onclick="editQuestion(15)">✏️ Editar</button>
+            <button class="btn-del-q" onclick="removeQuestion(15)">🗑️ Esborrar</button>
+          </div>
+        </div><div class="q-item">
+          <span><b>17.</b> Quina veu no és femenina: <i>(4 opcions)</i></span>
+          <div class="q-item-actions">
+            <button class="btn-edit-q" onclick="editQuestion(16)">✏️ Editar</button>
+            <button class="btn-del-q" onclick="removeQuestion(16)">🗑️ Esborrar</button>
+          </div>
+        </div><div class="q-item">
+          <span><b>18.</b> Quina veu no és masculina: <i>(4 opcions)</i></span>
+          <div class="q-item-actions">
+            <button class="btn-edit-q" onclick="editQuestion(17)">✏️ Editar</button>
+            <button class="btn-del-q" onclick="removeQuestion(17)">🗑️ Esborrar</button>
+          </div>
+        </div><div class="q-item">
+          <span><b>19.</b> Quina veu no és masculina: <i>(4 opcions)</i></span>
+          <div class="q-item-actions">
+            <button class="btn-edit-q" onclick="editQuestion(18)">✏️ Editar</button>
+            <button class="btn-del-q" onclick="removeQuestion(18)">🗑️ Esborrar</button>
+          </div>
+        </div><div class="q-item">
+          <span><b>20.</b> Quina veu no és masculina: <i>(4 opcions)</i></span>
+          <div class="q-item-actions">
+            <button class="btn-edit-q" onclick="editQuestion(19)">✏️ Editar</button>
+            <button class="btn-del-q" onclick="removeQuestion(19)">🗑️ Esborrar</button>
+          </div>
+        </div></div>
+        </div>
+
+        <div class="tab-content" id="tab-5">
+          <div class="form-group" style="background: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #38bdf8; gap: 12px;">
+            <label style="color: #38bdf8; font-size: 0.9rem;" id="ui-timer-cfg-title">⏱️ Configuració del Temporitzador per Pregunta:</label>
+            <div class="checkbox-row">
+              <input type="checkbox" id="cfg-timer-enabled">
+              <label for="cfg-timer-enabled" style="color: #fff; cursor: pointer;" id="ui-timer-enable-lbl">Activar temporitzador per defecte</label>
+            </div>
+            <div class="form-group" style="margin-top: 10px;">
+              <label id="ui-timer-sec-lbl">Temps per respondre cada pregunta (segons):</label>
+              <input type="number" id="cfg-timer-seconds" class="form-control" min="1" max="60" value="10">
+            </div>
+          </div>
+        </div>
+
+        <button class="btn-action" style="margin-top: 15px;" onclick="saveConfig()" id="ui-save-apply">GUARDAR I APLICAR</button>
+        <button class="btn-action btn-close" onclick="closeConfig()" id="ui-config-cancel">CANCEL·LAR</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const CONFIG_PIN = "0402";
+
+    const GEM_TYPES = [
+      { id: 'foc', nameKey: 'foc', color: '#ff4500', svg: `<svg viewBox="0 0 100 100" width="100%" height="100%"><defs><radialGradient id="fg" cx="45%" cy="35%" r="65%"><stop offset="0%" stop-color="#ffae00"/><stop offset="40%" stop-color="#ff5500"/><stop offset="80%" stop-color="#ff1e00"/><stop offset="100%" stop-color="#990000"/></radialGradient><filter id="neonFoc" x="-35%" y="-35%" width="170%" height="170%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur1"/><feGaussianBlur in="SourceGraphic" stdDeviation="5.5" result="blur2"/><feMerge><feMergeNode in="blur2"/><feMergeNode in="blur1"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><g filter="url(#neonFoc)"><polygon points="50,7 86,31 74,89 26,89 14,31" fill="url(#fg)" stroke="#ff8800" stroke-width="3.2"/><polygon points="50,7 70,31 50,55 30,31" fill="#ff9e00" opacity="0.75"/><path d="M50,20 Q62,48 50,82 Q38,48 50,20" fill="#ff7b00" stroke="#ffbe55" stroke-width="1.2" opacity="0.85"/></g></svg>` },
+      { id: 'aigua', nameKey: 'aigua', color: '#0088ff', svg: `<svg viewBox="0 0 100 100" width="100%" height="100%"><defs><radialGradient id="ag" cx="35%" cy="35%" r="65%"><stop offset="0%" stop-color="#7df9ff"/><stop offset="40%" stop-color="#00bfff"/><stop offset="80%" stop-color="#0066ff"/><stop offset="100%" stop-color="#002299"/></radialGradient><filter id="neonAigua" x="-35%" y="-35%" width="170%" height="170%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur1"/><feGaussianBlur in="SourceGraphic" stdDeviation="5.5" result="blur2"/><feMerge><feMergeNode in="blur2"/><feMergeNode in="blur1"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><g filter="url(#neonAigua)"><path d="M50,9 C50,9 81,42 81,62 C81,80 68,91 50,91 C32,91 19,80 19,62 C19,42 50,9 50,9 Z" fill="url(#ag)" stroke="#00f3ff" stroke-width="3.2"/><path d="M42,25 C42,25 28,52 28,64 C28,72 35,78 42,78" fill="none" stroke="#99ffff" stroke-width="3.5" stroke-linecap="round" opacity="0.95"/></g></svg>` },
+      { id: 'terra', nameKey: 'terra', color: '#00ff66', svg: `<svg viewBox="0 0 100 100" width="100%" height="100%"><defs><linearGradient id="tg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#39ff14"/><stop offset="45%" stop-color="#00cc44"/><stop offset="72%" stop-color="#8b4513"/><stop offset="100%" stop-color="#4e2708"/></linearGradient><filter id="neonTerra" x="-35%" y="-35%" width="170%" height="170%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur1"/><feGaussianBlur in="SourceGraphic" stdDeviation="5.5" result="blur2"/><feMerge><feMergeNode in="blur2"/><feMergeNode in="blur1"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><g filter="url(#neonTerra)"><polygon points="50,8 90,31 90,69 50,92 10,69 10,31" fill="url(#tg)" stroke="#39ff14" stroke-width="3.2"/><polygon points="50,20 76,38 50,55 24,38" fill="#00ff66" opacity="0.75"/><polygon points="24,38 50,55 65,74 35,74" fill="#8b4513" opacity="0.8"/><polygon points="76,38 65,74 50,55" fill="#5c2e0e" opacity="0.85"/></g></svg>` },
+      { id: 'aire', nameKey: 'aire', color: '#00e5ff', svg: `<svg viewBox="0 0 100 100" width="100%" height="100%"><defs><radialGradient id="rg" cx="45%" cy="40%" r="60%"><stop offset="0%" stop-color="#ffffff"/><stop offset="48%" stop-color="#cceeff"/><stop offset="82%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#0088cc"/></radialGradient><filter id="neonAire" x="-35%" y="-35%" width="170%" height="170%"><feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur1"/><feGaussianBlur in="SourceGraphic" stdDeviation="5.5" result="blur2"/><feMerge><feMergeNode in="blur2"/><feMergeNode in="blur1"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><g filter="url(#neonAire)"><circle cx="50" cy="50" r="41" fill="url(#rg)" stroke="#ffffff" stroke-width="3.5"/><path d="M22,50 Q38,32 54,50 T86,50" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round"/><path d="M28,38 Q42,22 58,38" fill="none" stroke="#e0f7ff" stroke-width="3" stroke-linecap="round" opacity="0.95"/><path d="M25,62 Q42,74 60,62" fill="none" stroke="#00e5ff" stroke-width="2.8" stroke-linecap="round" opacity="0.85"/></g></svg>` }
+    ];
+
+    const I18N = {
+      va: {
+        langTitle: "TRIA L'IDIOMA / SELECT LANGUAGE",
+        subTitle: "Benvingut al Repte de les Pedres Elementals",
+        btnVa: "Valencià", btnEs: "Castellano", btnEn: "English",
+        title: "TEST", subtitle: "Miguel Castellá",
+        gemsTitle: "✨ EL REPTE DE LES 4 PEDRES PRECIOSES ELEMENTALS:",
+        btnResetGems: "🔄 Reiniciar Pedres",
+        btnLevel1: "⚔️ NIVELL 1 (SENSE TEMPORITZADOR)",
+        btnLevel2: "⏱️ NIVELL 2 (AMB TEMPORITZADOR)",
+        btnConfig: "⚙️ CONFIGURACIÓ",
+        btnChangeLangMain: "🌐 CANVIAR D'IDIOMA",
+        selectGemTitle: "1. TRIA LA PEDRA PRECIOSA PER AQUEST COMBAT",
+        selectCharTitle: "2. TRIA EL TEU PERSONATGE",
+        enterCombat: "🔥 ENTRAR AL COMBAT",
+        exit: "SORTIR", configBtn: "CONFIG", langBtn: "IDIOMA",
+        vs: "VS", timerDefault: "⏳ Temps: ",
+        victory: "VICTÒRIA!", defeat: "GAME OVER!",
+        btnReturnStart: "🔄 TORNAR A L'INICI",
+        allGemsTitle: "🌟 ENHORABONA! 🌟",
+        allGemsMsg: "Has completat el repte aconseguint les 4 pedres precioses elementals amb èxit! Ets el mestre suprem dels elements!",
+        singleGemTitle: "🌟 RECOMPENSA CONSEGUIDA! 🌟",
+        continueBtn: "✨ CONTINUAR", btnReturnMenu: "🎉 TORNAR AL MENÚ",
+        pinTitle: "🔒 ACCÉS A CONFIGURACIÓ", pinSubtitle: "Introdueix la contrasenya de 4 xifres:",
+        pinError: "❌ Contrasenya incorrecta", cancel: "CANCEL·LAR",
+        tab1: "1. DESAR/CARREGAR", tab2: "2. PERSONATGES", tab3: "3. DANY COMBAT", tab4: "4. PREGUNTES", tab5: "5. TEMPORITZADOR",
+        saveApply: "GUARDAR I APLICAR", msgMinOneQ: "⚠️ Heu de mantenir com a mínim 1 pregunta.",
+        gems: { foc: "Rubí Ígneu (Foc Estel·lar)", aigua: "Safir Glacial (Aigua Abissal)", terra: "Maragda Gaia (Terra Viva)", aire: "Diamant Eteri (Aire Celestial)" },
+        defaultQuestions: [
+          { q: "Quina veu no és masculina:", options: ["Mezzosoprano", "Tenor", "Baríton", "Baix"], correct: 0 },
+          { q: "Quina veu no és femenina:", options: ["Tenor", "Soprano", "Mezzosoprano", "Contralt"], correct: 0 },
+          { q: "Nom de la veu masculina més aguda:", options: ["Tenor", "Baix", "Baríton", "Baix-baríton"], correct: 0 },
+          { q: "Nom de la veu femenina mitja:", options: ["Mezzosoprano", "Soprano", "Contralt", "Sopranista"], correct: 0 },
+          { q: "Noms de les tres veus femenines:", options: ["Soprano, Mezzosoprano i Contralt", "Tenor, Baríton i Baix", "Soprano, Tenor i Baix", "Contralt, Baríton i Tenor"], correct: 0 },
+          { q: "Nom d’un cor de veus d’home i de dona:", options: ["Cor mixt", "Cor d'homes", "Cor de dones", "Cor infantil"], correct: 0 },
+          { q: "Noms de les veus masculines:", options: ["Tenor, Baríton i Baix", "Soprano, Mezzosoprano i Contralt", "Soprano, Tenor i Baix", "Contralt, Baríton i Tenor"], correct: 0 },
+          { q: "Nom de la veu masculina greu:", options: ["Baix", "Tenor", "Baríton", "Contralt"], correct: 0 },
+          { q: "Nom de la veu femenina més aguda:", options: ["Soprano", "Mezzosoprano", "Contralt", "Tenor"], correct: 0 },
+          { q: "Nom d’un cor de veus de dona:", options: ["Cor de veus blanques o femenines", "Cor mixt", "Cor d'homes", "Cor de cambra"], correct: 0 }
+        ]
+      },
+      es: {
+        langTitle: "SELECCIONA EL IDIOMA / SELECT LANGUAGE",
+        subTitle: "Bienvenido al Reto de las Piedras Elementales",
+        btnVa: "Valencià", btnEs: "Castellano", btnEn: "English",
+        title: "TEST", subtitle: "Miguel Castellá",
+        gemsTitle: "✨ EL RETO DE LAS 4 PIEDRAS PRECIOSAS ELEMENTALES:",
+        btnResetGems: "🔄 Reiniciar Piedras",
+        btnLevel1: "⚔️ NIVEL 1 (SIN TEMPORIZADOR)",
+        btnLevel2: "⏱️ NIVEL 2 (CON TEMPORIZADOR)",
+        btnConfig: "⚙️ CONFIGURACIÓN",
+        btnChangeLangMain: "🌐 CAMBIAR DE IDIOMA",
+        selectGemTitle: "1. ELIGE LA PIEDRA PRECIOSA PARA ESTE COMBATE",
+        selectCharTitle: "2. ELIGE TU PERSONAJE",
+        enterCombat: "🔥 ENTRAR AL COMBATE",
+        exit: "SALIR", configBtn: "CONFIG", langBtn: "IDIOMA",
+        vs: "VS", timerDefault: "⏳ Tiempo: ",
+        victory: "¡VICTORIA!", defeat: "¡GAME OVER!",
+        btnReturnStart: "🔄 VOLVER AL INICIO",
+        allGemsTitle: "🌟 ¡ENHORABUENA! 🌟",
+        allGemsMsg: "¡Has completado el reto consiguiendo las 4 piedras preciosas elementales con éxito! ¡Eres el maestro supremo de los elementos!",
+        singleGemTitle: "🌟 ¡RECOMPENSA CONSEGUIDA! 🌟",
+        continueBtn: "✨ CONTINUAR", btnReturnMenu: "🎉 VOLVER AL MENÚ",
+        pinTitle: "🔒 ACCESO A CONFIGURACIÓN", pinSubtitle: "Introduce la contraseña de 4 cifras:",
+        pinError: "❌ Contraseña incorrecta", cancel: "CANCELAR",
+        tab1: "1. GUARDAR/CARGAR", tab2: "2. PERSONAJES", tab3: "3. DAÑO COMBATE", tab4: "4. PREGUNTAS", tab5: "5. TEMPORIZADOR",
+        saveApply: "GUARDAR Y APLICAR", msgMinOneQ: "⚠️ Debes mantener como mínimo 1 pregunta.",
+        gems: { foc: "Rubí Ígneo (Fuego Estelar)", aigua: "Zafiro Glacial (Agua Abisal)", terra: "Esmeralda Gaia (Tierra Viva)", aire: "Diamante Etéreo (Aire Celestial)" },
+        defaultQuestions: [
+          { q: "¿Qué voz no es masculina?", options: ["Mezzosoprano", "Tenor", "Barítono", "Bajo"], correct: 0 },
+          { q: "¿Qué voz no es femenina?", options: ["Tenor", "Soprano", "Mezzosoprano", "Contralto"], correct: 0 },
+          { q: "Nombre de la voz masculina más aguda:", options: ["Tenor", "Bajo", "Barítono", "Bajo-barítono"], correct: 0 },
+          { q: "Nombre de la voz femenina media:", options: ["Mezzosoprano", "Soprano", "Contralto", "Sopranista"], correct: 0 },
+          { q: "Nombres de las tres voces femeninas:", options: ["Soprano, Mezzosoprano y Contralto", "Tenor, Barítono y Bajo", "Soprano, Tenor y Bajo", "Contralto, Barítono y Tenor"], correct: 0 },
+          { q: "Nombre de un coro de voces de hombre y de mujer:", options: ["Coro mixto", "Coro de hombres", "Coro de mujeres", "Coro infantil"], correct: 0 },
+          { q: "Nombres de las voces masculinas:", options: ["Tenor, Barítono y Bajo", "Soprano, Mezzosoprano y Contralto", "Soprano, Tenor y Bajo", "Contralto, Barítono y Tenor"], correct: 0 },
+          { q: "Nombre de la voz masculina grave:", options: ["Bajo", "Tenor", "Barítono", "Contralto"], correct: 0 },
+          { q: "Nombre de la voz femenina más aguda:", options: ["Soprano", "Mezzosoprano", "Contralto", "Tenor"], correct: 0 },
+          { q: "Nombre de un coro de voces de mujer:", options: ["Coro de voces blancas o femeninas", "Coro mixto", "Coro de hombres", "Coro de cámara"], correct: 0 }
+        ]
+      },
+      en: {
+        langTitle: "CHOOSE LANGUAGE / TRIAR IDIOMA",
+        subTitle: "Welcome to the Elemental Gems Challenge",
+        btnVa: "Valencià", btnEs: "Castellano", btnEn: "English",
+        title: "TEST", subtitle: "Miguel Castellá",
+        gemsTitle: "✨ THE 4 ELEMENTAL PRECIOUS GEMS CHALLENGE:",
+        btnResetGems: "🔄 Reset Gems",
+        btnLevel1: "⚔️ LEVEL 1 (NO TIMER)",
+        btnLevel2: "⏱️ LEVEL 2 (WITH TIMER)",
+        btnConfig: "⚙️ SETTINGS",
+        btnChangeLangMain: "🌐 CHANGE LANGUAGE",
+        selectGemTitle: "1. CHOOSE THE PRECIOUS GEM FOR THIS BATTLE",
+        selectCharTitle: "2. CHOOSE YOUR CHARACTER",
+        enterCombat: "🔥 ENTER BATTLE",
+        exit: "EXIT", configBtn: "CONFIG", langBtn: "LANGUAGE",
+        vs: "VS", timerDefault: "⏳ Time: ",
+        victory: "VICTORY!", defeat: "GAME OVER!",
+        btnReturnStart: "🔄 RETURN TO HOME",
+        allGemsTitle: "🌟 CONGRATULATIONS! 🌟",
+        allGemsMsg: "You have successfully collected all 4 elemental precious gems! You are the supreme master of the elements!",
+        singleGemTitle: "🌟 REWARD UNLOCKED! 🌟",
+        continueBtn: "✨ CONTINUE", btnReturnMenu: "🎉 RETURN TO MENU",
+        pinTitle: "🔒 SETTINGS ACCESS", pinSubtitle: "Enter the 4-digit password:",
+        pinError: "❌ Incorrect password", cancel: "CANCEL",
+        tab1: "1. SAVE/LOAD", tab2: "2. CHARACTERS", tab3: "3. BATTLE DAMAGE", tab4: "4. QUESTIONS", tab5: "5. TIMER",
+        saveApply: "SAVE & APPLY", msgMinOneQ: "⚠️ You must keep at least 1 question.",
+        gems: { foc: "Igneous Ruby (Stellar Fire)", aigua: "Glacial Sapphire (Abyssal Water)", terra: "Gaia Emerald (Living Earth)", aire: "Ethereal Diamond (Celestial Air)" },
+        defaultQuestions: [
+          { q: "Which voice is not male?", options: ["Mezzosoprano", "Tenor", "Baritone", "Bass"], correct: 0 },
+          { q: "Which voice is not female?", options: ["Tenor", "Soprano", "Mezzosoprano", "Contralto"], correct: 0 },
+          { q: "Name of the highest male voice:", options: ["Tenor", "Bass", "Baritone", "Bass-baritone"], correct: 0 },
+          { q: "Name of the middle female voice:", options: ["Mezzosoprano", "Soprano", "Contralto", "Sopranist"], correct: 0 },
+          { q: "Names of the three female voices:", options: ["Soprano, Mezzosoprano and Contralto", "Tenor, Baritone and Bass", "Soprano, Tenor and Bass", "Contralto, Baritone and Tenor"], correct: 0 },
+          { q: "Name of a mixed choir of men and women:", options: ["Mixed choir", "Men's choir", "Women's choir", "Children's choir"], correct: 0 },
+          { q: "Names of the male voices:", options: ["Tenor, Baritone and Bass", "Soprano, Mezzosoprano and Contralto", "Soprano, Tenor and Bass", "Contralto, Baritone and Tenor"], correct: 0 },
+          { q: "Name of the lowest male voice:", options: ["Bass", "Tenor", "Baritone", "Contralto"], correct: 0 },
+          { q: "Name of the highest female voice:", options: ["Soprano", "Mezzosoprano", "Contralto", "Tenor"], correct: 0 },
+          { q: "Name of a women's choir:", options: ["White or women's voices choir", "Mixed choir", "Men's choir", "Chamber choir"], correct: 0 }
+        ]
+      }
+    };
+
+    let currentLang = localStorage.getItem('quiz_fighter_lang') || 'va';
+
+    function getGemName(id) {
+      return I18N[currentLang].gems[id] || id;
+    }
+
+    const defaultState = {
+  "p1aName": "Hemione",
+  "p1aImg": "https://static.wixstatic.com/media/a6e1f9_84dddab5f02b4d1eb0c1b019722a58e1~mv2.png/v1/fill/w_264,h_326,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/a6e1f9_84dddab5f02b4d1eb0c1b019722a58e1~mv2.png",
+  "p1bName": "Harry Potter",
+  "p1bImg": "https://static.wixstatic.com/media/a6e1f9_f1e92c04c35740fa9da65b0624e82dda~mv2.png/v1/fill/w_264,h_326,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/a6e1f9_f1e92c04c35740fa9da65b0624e82dda~mv2.png",
+  "p2Name": "Voldemort",
+  "p2Img": "https://static.wixstatic.com/media/a6e1f9_970bcdedce5c4088b0c5fe445ecef959~mv2.png/v1/fill/w_264,h_326,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/a6e1f9_970bcdedce5c4088b0c5fe445ecef959~mv2.png",
+  "bgImg": "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&w=1200&q=80",
+  "damageDeal": 10,
+  "damageSuper": 15,
+  "damageReceive": 15,
+  "timerEnabled": true,
+  "timerSeconds": 10,
+  "questions": [
+    {
+      "q": "Nom de la veu femenina més aguda:",
+      "options": [
+        {
+          "text": "Soprano",
+          "img": ""
+        },
+        {
+          "text": "Mezzosoprano",
+          "img": ""
+        },
+        {
+          "text": "Contralt",
+          "img": ""
+        },
+        {
+          "text": "Contratenor",
+          "img": ""
+        }
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Nom de la veu femenina mitja:",
+      "options": [
+        {
+          "text": "Mezzosoprano",
+          "img": ""
+        },
+        {
+          "text": "Soprano",
+          "img": ""
+        },
+        {
+          "text": "Contralt",
+          "img": ""
+        },
+        {
+          "text": "Contratenor",
+          "img": ""
+        }
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Nom de la veu femenina greu:",
+      "options": [
+        {
+          "text": "Contralt",
+          "img": ""
+        },
+        {
+          "text": "Soprano",
+          "img": ""
+        },
+        {
+          "text": "Mezzosoprano",
+          "img": ""
+        },
+        {
+          "text": "Contratenor",
+          "img": ""
+        }
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Nom de la veu masculina més aguda:",
+      "options": [
+        {
+          "text": "Contratenor",
+          "img": ""
+        },
+        {
+          "text": "Tenor",
+          "img": ""
+        },
+        {
+          "text": "Baríton",
+          "img": ""
+        },
+        {
+          "text": "Baix",
+          "img": ""
+        }
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Nom de la veu masculina aguda:",
+      "options": [
+        {
+          "text": "Tenor",
+          "img": ""
+        },
+        {
+          "text": "Baríton",
+          "img": ""
+        },
+        {
+          "text": "Baix",
+          "img": ""
+        },
+        {
+          "text": "Contratenor",
+          "img": ""
+        }
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Nom de la veu masculina mitja:",
+      "options": [
+        {
+          "text": "Baríton",
+          "img": ""
+        },
+        {
+          "text": "Contratenor",
+          "img": ""
+        },
+        {
+          "text": "Tenor",
+          "img": ""
+        },
+        {
+          "text": "Baix",
+          "img": ""
+        }
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Nom de la veu masculina greu:",
+      "options": [
+        {
+          "text": "Baix",
+          "img": ""
+        },
+        {
+          "text": "Contratenor",
+          "img": ""
+        },
+        {
+          "text": "Tenor",
+          "img": ""
+        },
+        {
+          "text": "Baríton",
+          "img": ""
+        }
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Noms de les tres veus femenines:",
+      "options": [
+        {
+          "text": "Soprano, mezzosoprano i contralt.",
+          "img": ""
+        },
+        {
+          "text": "Soprano, baríton i contralt.",
+          "img": ""
+        },
+        {
+          "text": "Soprano, mezzosoprano i contratenor.",
+          "img": ""
+        },
+        {
+          "text": "Soprano, mezzosoprano i baix.",
+          "img": ""
+        }
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Noms de les veus masculines:",
+      "options": [
+        {
+          "text": "Tenor, baríton i baix.",
+          "img": ""
+        },
+        {
+          "text": "Tenor, mezzosoprano i baix.",
+          "img": ""
+        },
+        {
+          "text": "Contralt, baríton i baix.",
+          "img": ""
+        },
+        {
+          "text": "Tenor, contralt i baix.",
+          "img": ""
+        }
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Nom d’un cor de veus de dona:",
+      "options": [
+        {
+          "text": "Cor de veus femenines.",
+          "img": ""
+        },
+        {
+          "text": "Cor de veus altes.",
+          "img": ""
+        },
+        {
+          "text": "Cor de veus agudes.",
+          "img": ""
+        },
+        {
+          "text": "Cor de veus blanques.",
+          "img": ""
+        }
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Nom d’un cor de veus d’home:",
+      "options": [
+        {
+          "text": "Cor de veus greus.",
+          "img": ""
+        },
+        {
+          "text": "Cor de veus fosques.",
+          "img": ""
+        },
+        {
+          "text": "Cor de veus grosses.",
+          "img": ""
+        },
+        {
+          "text": "Cor de veus profundes.",
+          "img": ""
+        }
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Nom d’un cor de veus de xiquets/es:",
+      "options": [
+        {
+          "text": "Cor de veus blanques.",
+          "img": ""
+        },
+        {
+          "text": "Cor de veus joves.",
+          "img": ""
+        },
+        {
+          "text": "Cor de veus agudes.",
+          "img": ""
+        },
+        {
+          "text": "Cor de veus altes.",
+          "img": ""
+        }
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Nom d’un cor de veus d’home i de dona:",
+      "options": [
+        {
+          "text": "Cor mixt.",
+          "img": ""
+        },
+        {
+          "text": "Cor complet.",
+          "img": ""
+        },
+        {
+          "text": "Cor de veus plenes.",
+          "img": ""
+        },
+        {
+          "text": "Cor de veus completes.",
+          "img": ""
+        }
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Veus d’un cor tradicional:",
+      "options": [
+        {
+          "text": "Soprano, contralt, tenor i baix.",
+          "img": ""
+        },
+        {
+          "text": "Soprano, mezzosoprano, tenor i baix.",
+          "img": ""
+        },
+        {
+          "text": "Soprano, tenor, baríton i baix.",
+          "img": ""
+        },
+        {
+          "text": "Soprano, contralt, contratenor i baix.",
+          "img": ""
+        }
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Quina veu no és femenina:",
+      "options": [
+        {
+          "text": "Tenor",
+          "img": ""
+        },
+        {
+          "text": "Soprano",
+          "img": ""
+        },
+        {
+          "text": "Mezzosoprano",
+          "img": ""
+        },
+        {
+          "text": "Contralt",
+          "img": ""
+        }
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Quina veu no és femenina:",
+      "options": [
+        {
+          "text": "Baríton",
+          "img": ""
+        },
+        {
+          "text": "Soprano",
+          "img": ""
+        },
+        {
+          "text": "Mezzosoprano",
+          "img": ""
+        },
+        {
+          "text": "Contralt",
+          "img": ""
+        }
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Quina veu no és femenina:",
+      "options": [
+        {
+          "text": "Baix",
+          "img": ""
+        },
+        {
+          "text": "Soprano",
+          "img": ""
+        },
+        {
+          "text": "Mezzosoprano",
+          "img": ""
+        },
+        {
+          "text": "Contralt",
+          "img": ""
+        }
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Quina veu no és masculina:",
+      "options": [
+        {
+          "text": "Soprano",
+          "img": ""
+        },
+        {
+          "text": "Tenor",
+          "img": ""
+        },
+        {
+          "text": "Baríton",
+          "img": ""
+        },
+        {
+          "text": "Baix",
+          "img": ""
+        }
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Quina veu no és masculina:",
+      "options": [
+        {
+          "text": "Mezzosoprano",
+          "img": ""
+        },
+        {
+          "text": "Tenor",
+          "img": ""
+        },
+        {
+          "text": "Baríton",
+          "img": ""
+        },
+        {
+          "text": "Baix",
+          "img": ""
+        }
+      ],
+      "correct": 0
+    },
+    {
+      "q": "Quina veu no és masculina:",
+      "options": [
+        {
+          "text": "Contralt",
+          "img": ""
+        },
+        {
+          "text": "Tenor",
+          "img": ""
+        },
+        {
+          "text": "Baríton",
+          "img": ""
+        },
+        {
+          "text": "Baix",
+          "img": ""
+        }
+      ],
+      "correct": 0
+    }
+  ]
+};
+
+    let state = JSON.parse(localStorage.getItem('quiz_fighter_cfg')) || defaultState;
+    if (!state.questions || state.questions.length === 0) {
+      state.questions = I18N[currentLang].defaultQuestions;
+    }
+    if (state.timerEnabled === undefined) state.timerEnabled = true;
+    if (!state.timerSeconds) state.timerSeconds = 10;
+
+    let unlockedGems = JSON.parse(localStorage.getItem('quiz_fighter_gems')) || [];
+
+    let selectedGemId = null;
+    let selectedPlayerOption = 1;
+    let selectedPlayerName = state.p1aName;
+    let selectedPlayerImg = state.p1aImg;
+
+    let hpP1 = 100;
+    let hpP2 = 100;
+    let currentQIndex = 0;
+    let openedFromStartScreen = false;
+    let isProcessingAnswer = false;
+
+    let countCorrect = 0;
+    let countWrong = 0;
+    let matchStartTime = 0;
+
+    let isTimerActiveForSession = false;
+    let questionTimerInterval = null;
+
+    const letters = ["A", "B", "C", "D"];
+    const letterClasses = ["letra-A", "letra-B", "letra-C", "letra-D"];
+
+    function setAppLanguage(lang) {
+      currentLang = lang;
+      localStorage.setItem('quiz_fighter_lang', lang);
+      document.getElementById('lang-screen').style.display = 'none';
+      document.getElementById('start-screen').style.display = 'flex';
+      updateUILanguage();
+      renderGemsTracker();
+    }
+
+    function openLanguageScreen() {
+      stopAudio();
+      stopQuestionTimer();
+      document.getElementById('quiz-modal').style.display = 'none';
+      document.getElementById('config-modal').style.display = 'none';
+      document.getElementById('start-screen').style.display = 'none';
+      document.getElementById('char-select-screen').style.display = 'none';
+      document.getElementById('results-screen').style.display = 'none';
+      document.getElementById('all-gems-screen').style.display = 'none';
+      document.getElementById('single-gem-screen').style.display = 'none';
+      document.getElementById('lang-screen').style.display = 'flex';
+    }
+
+    function updateUILanguage() {
+      const t = I18N[currentLang];
+      const setText = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = value;
+      };
+
+      setText('txt-lang-title', t.langTitle);
+      setText('txt-lang-subtitle', t.subTitle);
+      setText('ui-title', t.title);
+      setText('ui-gems-tracker-title', t.gemsTitle);
+      setText('ui-reset-gems', t.btnResetGems);
+      setText('ui-level1', t.btnLevel1);
+      setText('ui-level2', t.btnLevel2);
+      setText('ui-config-main', t.btnConfig);
+      setText('ui-change-lang-main', t.btnChangeLangMain);
+      setText('ui-select-gem-title', t.selectGemTitle);
+      setText('ui-select-char-title', t.selectCharTitle);
+      setText('ui-enter-combat', t.enterCombat);
+      setText('ui-exit', t.exit);
+      setText('ui-config-btn', t.configBtn);
+      setText('ui-lang-btn', t.langBtn);
+      setText('ui-stat-correct', currentLang === 'es' ? 'Aciertos' : (currentLang === 'en' ? 'Correct' : 'Encerts'));
+      setText('ui-stat-wrong', currentLang === 'es' ? 'Fallos' : (currentLang === 'en' ? 'Wrong' : 'Fallades'));
+      setText('ui-stat-accuracy', currentLang === 'es' ? 'Precisión' : (currentLang === 'en' ? 'Accuracy' : 'Precisió'));
+      setText('ui-stat-time', currentLang === 'es' ? 'Tiempo Total' : (currentLang === 'en' ? 'Total Time' : 'Temps Total'));
+      setText('ui-return-start', t.btnReturnStart);
+      setText('ui-all-gems-title', t.allGemsTitle);
+      setText('ui-all-gems-message', t.allGemsMsg);
+      setText('ui-return-menu', t.btnReturnMenu);
+      setText('ui-pin-title', t.pinTitle);
+      setText('ui-pin-subtitle', t.pinSubtitle);
+      setText('pin-error', t.pinError);
+      setText('ui-pin-cancel', t.cancel);
+      setText('ui-tab1', t.tab1);
+      setText('ui-tab2', t.tab2);
+      setText('ui-tab3', t.tab3);
+      setText('ui-tab4', t.tab4);
+      setText('ui-tab5', t.tab5);
+      setText('ui-save-apply', t.saveApply);
+      setText('ui-config-cancel', t.cancel);
+      setText('single-gem-title-text', t.singleGemTitle);
+      setText('ui-continue-btn', t.continueBtn);
+    }
+
+    function triggerWinConfetti() {
+      if (typeof confetti === 'function') {
+        confetti({ particleCount: 110, spread: 80, origin: { y: 0.6 } });
+      }
+    }
+
+    function triggerAllGemsSuperCelebration() {
+      if (typeof confetti === 'function') {
+        const duration = 5 * 1000;
+        const animationEnd = Date.now() + duration;
+        const defaults = { startVelocity: 35, spread: 360, ticks: 80, zIndex: 350 };
+        function randomInRange(min, max) { return Math.random() * (max - min) + min; }
+        const interval = setInterval(function() {
+          const timeLeft = animationEnd - Date.now();
+          if (timeLeft <= 0) return clearInterval(interval);
+          const particleCount = 60 * (timeLeft / duration);
+          confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }, colors: ['#ffcc00', '#22c55e', '#38bdf8', '#ef4444', '#a855f7'] }));
+          confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }, colors: ['#ffcc00', '#22c55e', '#38bdf8', '#ef4444', '#a855f7'] }));
+        }, 200);
+      }
+    }
+
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playFestiveVictoryMusic() {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const notes = [
+        { f: 261.63, d: 0.2 }, { f: 329.63, d: 0.2 }, { f: 392.00, d: 0.2 }, { f: 523.25, d: 0.4 },
+        { f: 392.00, d: 0.2 }, { f: 523.25, d: 0.6 }, { f: 440.00, d: 0.2 }, { f: 493.88, d: 0.2 },
+        { f: 523.25, d: 0.8 }, { f: 659.25, d: 0.4 }, { f: 783.99, d: 0.8 }
+      ];
+      let timeOffset = audioCtx.currentTime;
+      notes.forEach(note => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(note.f, timeOffset);
+        gain.gain.setValueAtTime(0.25, timeOffset);
+        gain.gain.linearRampToValueAtTime(0.01, timeOffset + note.d);
+        osc.start(timeOffset);
+        osc.stop(timeOffset + note.d);
+        timeOffset += note.d + 0.05;
+      });
+    }
+
+    function playSound(type) {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      if (type === 'joyful') {
+        const now = audioCtx.currentTime;
+        osc.type = 'triangle';
+        gain.gain.setValueAtTime(0.2, now);
+        osc.frequency.setValueAtTime(261.63, now);
+        osc.frequency.setValueAtTime(329.63, now + 0.1);
+        osc.frequency.setValueAtTime(392.00, now + 0.2);
+        osc.frequency.setValueAtTime(523.25, now + 0.3);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.5);
+        osc.start(now); osc.stop(now + 0.5);
+      } else if (type === 'hit') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.3);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+      } else if (type === 'win') {
+        playFestiveVictoryMusic();
+      } else if (type === 'lose') {
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+        osc.frequency.setValueAtTime(100, audioCtx.currentTime + 0.2);
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.4);
+      } else if (type === 'tick') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+      }
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') exitToStartScreen();
+    });
+
+    function renderGemsTracker() {
+      const container = document.getElementById('gems-tracker-grid');
+      container.innerHTML = '';
+      GEM_TYPES.forEach(gem => {
+        const isUnlocked = unlockedGems.includes(gem.id);
+        const item = document.createElement('div');
+        item.className = `gem-item ${isUnlocked ? 'unlocked' : ''}`;
+        item.innerHTML = `
+          <div class="gem-icon" style="width: 46px; height: 46px;">${gem.svg}</div>
+          <div class="gem-name">${getGemName(gem.id)}</div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function renderHudGems() {
+      const hudBar = document.getElementById('hud-gems-bar');
+      hudBar.innerHTML = '';
+      GEM_TYPES.forEach(gem => {
+        const slot = document.createElement('div');
+        const isUnlocked = unlockedGems.includes(gem.id);
+        const isCurrentTarget = gem.id === selectedGemId;
+
+        slot.className = 'hud-gem-slot';
+        if (isUnlocked) slot.classList.add('unlocked');
+        else if (isCurrentTarget) slot.classList.add('current-target');
+
+        slot.title = `${getGemName(gem.id)}`;
+        slot.style.width = '32px';
+        slot.style.height = '32px';
+        slot.innerHTML = gem.svg;
+        hudBar.appendChild(slot);
+      });
+    }
+
+    function resetGemsProgress() {
+      if (confirm(currentLang === 'es' ? "¿Quieres reiniciar el progreso de las 4 piedras?" : (currentLang === 'en' ? "Do you want to reset the gems progress?" : "Vols reiniciar el progrés de les 4 pedres?"))) {
+        unlockedGems = [];
+        localStorage.removeItem('quiz_fighter_gems');
+        renderGemsTracker();
+        renderHudGems();
+      }
+    }
+
+    function applyVisuals() {
+      document.getElementById('name-p1').innerText = selectedPlayerName;
+      document.getElementById('name-p2').innerText = state.p2Name;
+      document.getElementById('char-p1').style.backgroundImage = `url('${selectedPlayerImg}')`;
+      document.getElementById('char-p2').style.backgroundImage = `url('${state.p2Img}')`;
+      document.getElementById('hud-avatar-p1').style.backgroundImage = `url('${selectedPlayerImg}')`;
+      document.getElementById('hud-avatar-p2').style.backgroundImage = `url('${state.p2Img}')`;
+      document.getElementById('game-container').style.backgroundImage = `url('${state.bgImg}')`;
+      renderHudGems();
+    }
+
+    function spawnFloatingText(text, color, isRightSide) {
+      const el = document.createElement('div');
+      el.className = 'floating-text';
+      el.innerText = text;
+      el.style.color = color;
+      el.style.left = isRightSide ? '65%' : '20%';
+      document.getElementById('stage-area').appendChild(el);
+      setTimeout(() => el.remove(), 1400);
+    }
+
+    function openCharSelect(useTimer = true) {
+      isTimerActiveForSession = useTimer;
+      document.getElementById('start-screen').style.display = 'none';
+      document.getElementById('btn-exit-game').style.display = 'block';
+
+      const gemContainer = document.getElementById('gem-select-container');
+      gemContainer.innerHTML = '';
+      let firstAvailableGem = null;
+
+      GEM_TYPES.forEach(gem => {
+        const isUnlocked = unlockedGems.includes(gem.id);
+        const card = document.createElement('div');
+        card.className = `gem-select-card ${isUnlocked ? 'already-unlocked' : ''}`;
+        card.innerHTML = `
+          <div style="width: 58px; height: 58px;">${gem.svg}</div>
+          <div style="font-size: 0.6rem; color: #fff; font-weight: bold; text-align: center;">${getGemName(gem.id)}</div>
+          <div style="font-size: 0.5rem; color: ${isUnlocked ? '#22c55e' : '#ffcc00'};">
+            ${isUnlocked ? 'ACONSEGUIT 🏆' : 'PENDENT 🔒'}
+          </div>
+        `;
+
+        if (!isUnlocked && !firstAvailableGem) firstAvailableGem = gem.id;
+        if (!isUnlocked) card.onclick = () => selectGem(gem.id);
+        gemContainer.appendChild(card);
+      });
+
+      selectedGemId = firstAvailableGem || GEM_TYPES[0].id;
+      highlightSelectedGem();
+
+      document.getElementById('select-name-p1a').innerText = state.p1aName;
+      document.getElementById('select-avatar-p1a').style.backgroundImage = `url('${state.p1aImg}')`;
+      document.getElementById('select-name-p1b').innerText = state.p1bName;
+      document.getElementById('select-avatar-p1b').style.backgroundImage = `url('${state.p1bImg}')`;
+
+      selectFighter(1);
+      document.getElementById('char-select-screen').style.display = 'flex';
+    }
+
+    function selectGem(gemId) {
+      selectedGemId = gemId;
+      highlightSelectedGem();
+    }
+
+    function highlightSelectedGem() {
+      const cards = document.querySelectorAll('.gem-select-card');
+      GEM_TYPES.forEach((gem, idx) => {
+        if (cards[idx]) {
+          if (gem.id === selectedGemId) cards[idx].classList.add('selected');
+          else cards[idx].classList.remove('selected');
+        }
+      });
+    }
+
+    function selectFighter(option) {
+      selectedPlayerOption = option;
+      if (option === 1) {
+        selectedPlayerName = state.p1aName;
+        selectedPlayerImg = state.p1aImg;
+        document.getElementById('card-p1a').classList.add('selected');
+        document.getElementById('card-p1b').classList.remove('selected');
+      } else {
+        selectedPlayerName = state.p1bName;
+        selectedPlayerImg = state.p1bImg;
+        document.getElementById('card-p1b').classList.add('selected');
+        document.getElementById('card-p1a').classList.remove('selected');
+      }
+    }
+
+    function confirmSelectionAndStart() {
+      document.getElementById('char-select-screen').style.display = 'none';
+      startGame();
+    }
+
+    function startGame() {
+      document.getElementById('btn-main-config').style.display = 'none';
+      document.getElementById('btn-main-lang').style.display = 'none';
+      document.getElementById('btn-exit-game').style.display = 'none';
+      document.getElementById('results-screen').style.display = 'none';
+      
+      applyVisuals();
+
+      hpP1 = 100;
+      hpP2 = 100;
+      countCorrect = 0;
+      countWrong = 0;
+      matchStartTime = Date.now();
+      
+      updateHP();
+
+      state.questions.sort(() => Math.random() - 0.5);
+      currentQIndex = 0;
+
+      showQuestion();
+    }
+
+    function exitToStartScreen() {
+      stopAudio();
+      stopQuestionTimer();
+      document.getElementById('quiz-modal').style.display = 'none';
+      document.getElementById('pin-modal').style.display = 'none';
+      document.getElementById('config-modal').style.display = 'none';
+      document.getElementById('results-screen').style.display = 'none';
+      document.getElementById('char-select-screen').style.display = 'none';
+      document.getElementById('all-gems-screen').style.display = 'none';
+      document.getElementById('single-gem-screen').style.display = 'none';
+      
+      renderGemsTracker();
+      document.getElementById('start-screen').style.display = 'flex';
+      document.getElementById('btn-main-config').style.display = 'block';
+      document.getElementById('btn-main-lang').style.display = 'block';
+      document.getElementById('btn-exit-game').style.display = 'block';
+    }
+
+    function stopAudio() {
+      const qAudio = document.getElementById('quiz-question-audio');
+      if (qAudio) { qAudio.pause(); qAudio.currentTime = 0; }
+    }
+
+    function stopQuestionTimer() {
+      if (questionTimerInterval) {
+        clearInterval(questionTimerInterval);
+        questionTimerInterval = null;
+      }
+    }
+
+    function startQuestionTimer() {
+      stopQuestionTimer();
+      const timerBarContainer = document.getElementById('question-timer-bar-container');
+      const timerBar = document.getElementById('question-timer-bar');
+      const timerText = document.getElementById('question-timer-text');
+
+      if (!isTimerActiveForSession) {
+        timerBarContainer.style.display = 'none';
+        timerText.style.display = 'none';
+        return;
+      }
+
+      timerBarContainer.style.display = 'block';
+      timerText.style.display = 'block';
+
+      const totalSeconds = parseInt(state.timerSeconds) || 10;
+      let totalMs = totalSeconds * 1000;
+      let remainingMs = totalMs;
+
+      timerText.innerText = `${I18N[currentLang].timerDefault}${totalSeconds}s`;
+      timerBar.style.width = '100%';
+
+      const intervalStep = 100;
+      let lastSecondLogged = totalSeconds;
+
+      questionTimerInterval = setInterval(() => {
+        remainingMs -= intervalStep;
+        const currentSecond = Math.ceil(remainingMs / 1000);
+
+        if (currentSecond !== lastSecondLogged && currentSecond > 0) {
+          playSound('tick');
+          lastSecondLogged = currentSecond;
+        }
+
+        const percentage = Math.max(0, (remainingMs / totalMs) * 100);
+        timerBar.style.width = percentage + '%';
+        timerText.innerText = `${I18N[currentLang].timerDefault}${Math.max(0, currentSecond)}s`;
+
+        if (remainingMs <= 0) {
+          stopQuestionTimer();
+          if (!isProcessingAnswer) handleAnswer(false, null, true);
+        }
+      }, intervalStep);
+    }
+
+    function showQuestion() {
+      if (hpP1 <= 0 || hpP2 <= 0) return;
+
+      isProcessingAnswer = false;
+      document.getElementById('feedback-msg').style.display = 'none';
+
+      if (currentQIndex >= state.questions.length) {
+        state.questions.sort(() => Math.random() - 0.5);
+        currentQIndex = 0;
+      }
+
+      const qData = state.questions[currentQIndex];
+      document.getElementById('quiz-question').innerText = qData.q;
+
+      const imgContainer = document.getElementById('quiz-img-container');
+      const qImg = document.getElementById('quiz-question-img');
+      if (qData.img && qData.img.trim() !== "") {
+        qImg.src = qData.img;
+        imgContainer.style.display = 'flex';
+      } else {
+        imgContainer.style.display = 'none';
+        qImg.src = "";
+      }
+
+      const audioContainer = document.getElementById('quiz-audio-container');
+      const qAudio = document.getElementById('quiz-question-audio');
+      if (qData.audio && qData.audio.trim() !== "") {
+        qAudio.src = qData.audio;
+        audioContainer.style.display = 'flex';
+      } else {
+        audioContainer.style.display = 'none';
+        qAudio.src = "";
+      }
+
+      const optsContainer = document.getElementById('quiz-options');
+      optsContainer.innerHTML = '';
+
+      const optionsWithIndex = qData.options
+        .map((opt, idx) => ({ 
+          text: typeof opt === 'object' ? opt.text : opt, 
+          img: typeof opt === 'object' ? opt.img : (qData.optionImgs ? qData.optionImgs[idx] : null), 
+          originalIdx: idx 
+        }))
+        .filter(item => (item.text && item.text.trim() !== "") || (item.img && item.img.trim() !== ""));
+
+      optionsWithIndex.sort(() => Math.random() - 0.5);
+
+      optionsWithIndex.forEach((item, displayIdx) => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.dataset.originalIdx = item.originalIdx;
+        
+        let innerHtml = `<span class="option-letter ${letterClasses[displayIdx]}">${letters[displayIdx]}</span>`;
+        if (item.img) innerHtml += `<img src="${item.img}" class="option-img-preview" alt="Opció">`;
+        if (item.text) innerHtml += `<span>${item.text}</span>`;
+        btn.innerHTML = innerHtml;
+
+        btn.onclick = () => {
+          if (!isProcessingAnswer) handleAnswer(item.originalIdx === qData.correct, btn);
+        };
+        optsContainer.appendChild(btn);
+      });
+
+      document.getElementById('quiz-modal').style.display = 'flex';
+      startQuestionTimer();
+    }
+
+    function handleAnswer(isCorrect, clickedBtn, isTimeout = false) {
+      isProcessingAnswer = true;
+      stopQuestionTimer();
+      stopAudio();
+
+      const p1El = document.getElementById('char-p1');
+      const p2El = document.getElementById('char-p2');
+      const qData = state.questions[currentQIndex];
+      const buttons = document.querySelectorAll('.option-btn');
+
+      buttons.forEach(btn => {
+        if (parseInt(btn.dataset.originalIdx) === qData.correct) {
+          btn.classList.add('correct-feedback');
+        } else if (btn === clickedBtn) {
+          btn.classList.add('wrong-feedback');
+        }
+      });
+
+      if (!isCorrect) {
+        const feedbackEl = document.getElementById('feedback-msg');
+        feedbackEl.innerText = isTimeout ? "⏰ TEMPS ESGOTAT!" : "❌ RESPOSTA INCORRECTA!";
+        feedbackEl.style.display = 'block';
+      }
+
+      setTimeout(() => {
+        document.getElementById('quiz-modal').style.display = 'none';
+
+        if (isCorrect) {
+          countCorrect++;
+          const finalDamage = parseInt(state.damageDeal);
+          playSound('joyful');
+          p1El.classList.add('attack-p1');
+          spawnFloatingText(`¡ENCERT! -${finalDamage} HP`, '#22c55e', true);
+
+          setTimeout(() => {
+            p2El.classList.add('hit');
+            hpP2 = Math.max(0, hpP2 - finalDamage);
+            updateHP();
+          }, 500);
+
+          setTimeout(() => {
+            p1El.classList.remove('attack-p1');
+            p2El.classList.remove('hit');
+            checkEndOrNext();
+          }, 1500);
+
+        } else {
+          countWrong++;
+          playSound('hit');
+          p2El.classList.add('attack-p2');
+          const dmg = parseInt(state.damageReceive);
+          spawnFloatingText(isTimeout ? `¡TEMPS ESGOTAT! -${dmg} HP` : `¡FALLAT! -${dmg} HP`, '#ef4444', false);
+
+          setTimeout(() => {
+            p1El.classList.add('hit');
+            hpP1 = Math.max(0, hpP1 - dmg);
+            updateHP();
+          }, 500);
+
+          setTimeout(() => {
+            p2El.classList.remove('attack-p2');
+            p1El.classList.remove('hit');
+            checkEndOrNext();
+          }, 1500);
+        }
+      }, isCorrect ? 400 : 1200);
+    }
+
+    function checkEndOrNext() {
+      if (hpP2 <= 0) {
+        playSound('win');
+        showFinalResults(true);
+      } else if (hpP1 <= 0) {
+        playSound('lose');
+        showFinalResults(false);
+      } else {
+        currentQIndex++;
+        setTimeout(showQuestion, 600);
+      }
+    }
+
+    function showFinalResults(isWin) {
+      stopQuestionTimer();
+      document.getElementById('btn-exit-game').style.display = 'block';
+      const totalTime = Math.round((Date.now() - matchStartTime) / 1000);
+      const totalQuestions = countCorrect + countWrong;
+      const accuracy = totalQuestions > 0 ? Math.round((countCorrect / totalQuestions) * 100) : 0;
+
+      if (isWin) {
+        if (!unlockedGems.includes(selectedGemId)) {
+          unlockedGems.push(selectedGemId);
+          localStorage.setItem('quiz_fighter_gems', JSON.stringify(unlockedGems));
+        }
+
+        if (unlockedGems.length === 4) {
+          showAllGemsCelebrationScreen();
+        } else {
+          showSingleGemCelebrationScreen(selectedGemId);
+        }
+      } else {
+        const titleEl = document.getElementById('results-title');
+        titleEl.innerText = `💀 ${I18N[currentLang].defeat}`;
+        titleEl.className = 'results-title lose';
+
+        document.getElementById('stat-correct').innerText = countCorrect;
+        document.getElementById('stat-wrong').innerText = countWrong;
+        document.getElementById('stat-accuracy').innerText = `${accuracy}%`;
+        document.getElementById('stat-time').innerText = `${totalTime}s`;
+
+        document.getElementById('results-screen').style.display = 'flex';
+      }
+    }
+
+    function showSingleGemCelebrationScreen(gemId) {
+      const activeGem = GEM_TYPES.find(g => g.id === gemId) || GEM_TYPES[0];
+      document.getElementById('single-gem-avatar').style.backgroundImage = `url('${selectedPlayerImg}')`;
+      document.getElementById('single-gem-svg-icon').innerHTML = activeGem.svg;
+      document.getElementById('single-gem-desc-text').innerText = `${selectedPlayerName} ha aconseguit: ${getGemName(activeGem.id)}! (${unlockedGems.length}/4)`;
+
+      document.getElementById('single-gem-screen').style.display = 'flex';
+      playFestiveVictoryMusic();
+      triggerWinConfetti();
+    }
+
+    function closeSingleGemCelebration() {
+      document.getElementById('single-gem-screen').style.display = 'none';
+      exitToStartScreen();
+    }
+
+    function showAllGemsCelebrationScreen() {
+      const avatarEl = document.getElementById('all-gems-avatar');
+      avatarEl.style.backgroundImage = `url('${selectedPlayerImg}')`;
+      document.getElementById('all-gems-message').innerText = I18N[currentLang].allGemsMsg;
+
+      const displayContainer = document.getElementById('all-gems-display-container');
+      displayContainer.innerHTML = '';
+      GEM_TYPES.forEach(gem => {
+        const item = document.createElement('div');
+        item.className = 'all-gems-display-item';
+        item.innerHTML = `
+          <div style="width: 50px; height: 50px;">${gem.svg}</div>
+          <div style="font-size: 0.6rem; color: #ffcc00; font-weight: bold; text-align: center;">${getGemName(gem.id)}</div>
+        `;
+        displayContainer.appendChild(item);
+      });
+
+      document.getElementById('all-gems-screen').style.display = 'flex';
+      playFestiveVictoryMusic();
+      triggerAllGemsSuperCelebration();
+    }
+
+    function closeAllGemsCelebration() {
+      document.getElementById('all-gems-screen').style.display = 'none';
+      exitToStartScreen();
+    }
+
+    function updateHP() {
+      const barP1 = document.getElementById('hp-p1');
+      const barP2 = document.getElementById('hp-p2');
+      barP1.style.width = hpP1 + '%';
+      barP2.style.width = hpP2 + '%';
+      setBarColor(barP1, hpP1);
+      setBarColor(barP2, hpP2);
+    }
+
+    function setBarColor(bar, hp) {
+      bar.classList.remove('yellow', 'red');
+      if (hp < 30) bar.classList.add('red');
+      else if (hp < 60) bar.classList.add('yellow');
+    }
+
+    function switchTab(tabIdx) {
+      document.querySelectorAll('.tab-btn').forEach((btn, idx) => {
+        btn.classList.toggle('active', idx === tabIdx - 1);
+      });
+      document.querySelectorAll('.tab-content').forEach((content, idx) => {
+        content.classList.toggle('active', idx === tabIdx - 1);
+      });
+    }
+
+    function requestConfigAccessFromStart() {
+      openedFromStartScreen = true;
+      requestConfigAccess();
+    }
+
+    function requestConfigAccess() {
+      stopAudio();
+      stopQuestionTimer();
+      document.getElementById('quiz-modal').style.display = 'none';
+      const pinInput = document.getElementById('pin-input');
+      pinInput.value = '';
+      document.getElementById('pin-error').style.display = 'none';
+      document.getElementById('pin-modal').style.display = 'flex';
+      setTimeout(() => pinInput.focus(), 100);
+    }
+
+    function verifyPin() {
+      const pinInput = document.getElementById('pin-input').value;
+      if (pinInput === CONFIG_PIN) {
+        closePinModal();
+        showConfigModal();
+      } else {
+        document.getElementById('pin-error').style.display = 'block';
+        document.getElementById('pin-input').value = '';
+        setTimeout(() => document.getElementById('pin-input').focus(), 100);
+      }
+    }
+
+    function closePinModal() {
+      document.getElementById('pin-modal').style.display = 'none';
+    }
+
+    function showConfigModal() {
+      stopAudio();
+      stopQuestionTimer();
+      document.getElementById('quiz-modal').style.display = 'none';
+
+      document.getElementById('cfg-name-p1a').value = state.p1aName;
+      document.getElementById('cfg-img-p1a').value = state.p1aImg;
+      document.getElementById('cfg-name-p1b').value = state.p1bName;
+      document.getElementById('cfg-img-p1b').value = state.p1bImg;
+      document.getElementById('cfg-name-p2').value = state.p2Name;
+      document.getElementById('cfg-img-p2').value = state.p2Img;
+      document.getElementById('cfg-bg-img').value = state.bgImg;
+      document.getElementById('cfg-damage-deal').value = state.damageDeal;
+      document.getElementById('cfg-damage-super').value = state.damageSuper;
+      document.getElementById('cfg-damage-receive').value = state.damageReceive;
+      document.getElementById('cfg-timer-enabled').checked = state.timerEnabled !== false;
+      document.getElementById('cfg-timer-seconds').value = state.timerSeconds || 10;
+
+      switchTab(1);
+      resetQuestionForm();
+      renderQuestionsList();
+      document.getElementById('config-modal').style.display = 'flex';
+    }
+
+    function closeConfig() {
+      document.getElementById('config-modal').style.display = 'none';
+      if (openedFromStartScreen) {
+        openedFromStartScreen = false;
+        document.getElementById('start-screen').style.display = 'flex';
+      } else if (document.getElementById('start-screen').style.display !== 'flex') {
+        showQuestion();
+      }
+    }
+
+    function exportConfigJson() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", "quiz_elemental_config.json");
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function exportStandaloneHtml() {
+      state.p1aName = document.getElementById('cfg-name-p1a').value.trim() || state.p1aName;
+      state.p1aImg = document.getElementById('cfg-img-p1a').value.trim() || state.p1aImg;
+      state.p1bName = document.getElementById('cfg-name-p1b').value.trim() || state.p1bName;
+      state.p1bImg = document.getElementById('cfg-img-p1b').value.trim() || state.p1bImg;
+      state.p2Name = document.getElementById('cfg-name-p2').value.trim() || state.p2Name;
+      state.p2Img = document.getElementById('cfg-img-p2').value.trim() || state.p2Img;
+      state.bgImg = document.getElementById('cfg-bg-img').value.trim() || state.bgImg;
+      state.damageDeal = parseInt(document.getElementById('cfg-damage-deal').value) || state.damageDeal;
+      state.damageSuper = parseInt(document.getElementById('cfg-damage-super').value) || state.damageSuper;
+      state.damageReceive = parseInt(document.getElementById('cfg-damage-receive').value) || state.damageReceive;
+      state.timerEnabled = document.getElementById('cfg-timer-enabled').checked;
+      state.timerSeconds = parseInt(document.getElementById('cfg-timer-seconds').value) || 10;
+
+      const cloneDoc = document.cloneNode(true);
+      const scriptTags = cloneDoc.querySelectorAll('script');
+      scriptTags.forEach(script => {
+        if (script.textContent.includes('const defaultState =')) {
+          script.textContent = script.textContent.replace(
+            /const defaultState =[\s\S]*?};/,
+            `const defaultState = ${JSON.stringify(state, null, 2)};`
+          );
+        }
+      });
+
+      const fullHtml = "<!DOCTYPE html>\n" + cloneDoc.documentElement.outerHTML;
+      const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.href = url;
+      downloadAnchor.download = "Test-Pedres-Elementals.html";
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function importConfigJson(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (imported && imported.questions) {
+            state = imported;
+            localStorage.setItem('quiz_fighter_cfg', JSON.stringify(state));
+            applyVisuals();
+            showConfigModal();
+            alert("Configuració carregada correctament!");
+          } else {
+            alert("El format del fitxer JSON no és vàlid.");
+          }
+        } catch (err) {
+          alert("Error al llegir el fitxer JSON.");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function uploadImg(event, targetId) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          document.getElementById(targetId).value = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function renderQuestionsList() {
+      const container = document.getElementById('questions-list');
+      container.innerHTML = '';
+      if (!state.questions) state.questions = [];
+      
+      state.questions.forEach((q, idx) => {
+        const validOptsCount = q.options ? q.options.filter(o => (typeof o === 'string' && o.trim() !== "") || (typeof o === 'object' && (o.text || o.img))).length : 0;
+        const hasImgTag = q.img ? ' 🖼️' : '';
+        const hasAudioTag = q.audio ? ' 🔊' : '';
+        const div = document.createElement('div');
+        div.className = 'q-item';
+        div.innerHTML = `
+          <span><b>${idx + 1}.</b> ${q.q}${hasImgTag}${hasAudioTag} <i>(${validOptsCount} opcions)</i></span>
+          <div class="q-item-actions">
+            <button class="btn-edit-q" onclick="editQuestion(${idx})">✏️ Editar</button>
+            <button class="btn-del-q" onclick="removeQuestion(${idx})">🗑️ Esborrar</button>
+          </div>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function resetQuestionForm() {
+      document.getElementById('edit-q-index').value = "-1";
+      document.getElementById('form-q-title').innerText = "Afegir una pregunta manualment:";
+      document.getElementById('btn-save-q').innerText = "+ AFEGIR PREGUNTA";
+      document.getElementById('btn-cancel-edit-q').style.display = 'none';
+
+      document.getElementById('new-q-text').value = '';
+      document.getElementById('new-q-img').value = '';
+      document.getElementById('new-q-audio').value = '';
+      document.getElementById('new-q-opt0').value = '';
+      document.getElementById('new-q-opt0-img').value = '';
+      document.getElementById('new-q-opt1').value = '';
+      document.getElementById('new-q-opt1-img').value = '';
+      document.getElementById('new-q-opt2').value = '';
+      document.getElementById('new-q-opt2-img').value = '';
+      document.getElementById('new-q-opt3').value = '';
+      document.getElementById('new-q-opt3-img').value = '';
+    }
+
+    function editQuestion(idx) {
+      const qObj = state.questions[idx];
+      if (!qObj) return;
+
+      document.getElementById('edit-q-index').value = idx;
+      document.getElementById('form-q-title').innerText = `Modificar Pregunta #${idx + 1}:`;
+      document.getElementById('btn-save-q').innerText = "💾 GUARDAR CAMBIS";
+      document.getElementById('btn-cancel-edit-q').style.display = 'block';
+
+      document.getElementById('new-q-text').value = qObj.q || '';
+      document.getElementById('new-q-img').value = qObj.img || '';
+      document.getElementById('new-q-audio').value = qObj.audio || '';
+
+      const options = qObj.options || [];
+      const optionImgs = qObj.optionImgs || [];
+
+      for (let i = 0; i < 4; i++) {
+        const optVal = options[i];
+        let textVal = '';
+        let imgVal = '';
+        if (typeof optVal === 'object' && optVal !== null) {
+          textVal = optVal.text || '';
+          imgVal = optVal.img || '';
+        } else if (typeof optVal === 'string') {
+          textVal = optVal;
+          imgVal = optionImgs[i] || '';
+        }
+        const textInput = document.getElementById(`new-q-opt${i}`);
+        const imgInput = document.getElementById(`new-q-opt${i}-img`);
+        if (textInput) textInput.value = textVal;
+        if (imgInput) imgInput.value = imgVal;
+      }
+    }
+
+    function addOrUpdateQuestion() {
+      const editIdx = parseInt(document.getElementById('edit-q-index').value);
+      const qText = document.getElementById('new-q-text').value.trim();
+      const qImg = document.getElementById('new-q-img').value.trim();
+      const qAudio = document.getElementById('new-q-audio').value.trim();
+
+      const options = [];
+      for (let i = 0; i < 4; i++) {
+        const tVal = document.getElementById(`new-q-opt${i}`).value.trim();
+        const iVal = document.getElementById(`new-q-opt${i}-img`).value.trim();
+        if (tVal !== "" || iVal !== "") {
+          options.push({ text: tVal, img: iVal });
+        }
+      }
+
+      if (!qText || options.length < 2) {
+        alert("Com a mínim has d'escriure la pregunta i 2 opcions vàlides.");
+        return;
+      }
+
+      const newQ = { q: qText, options: options, correct: 0 };
+      if (qImg) newQ.img = qImg;
+      if (qAudio) newQ.audio = qAudio;
+
+      if (!state.questions) state.questions = [];
+      if (editIdx >= 0 && editIdx < state.questions.length) {
+        state.questions[editIdx] = newQ;
+      } else {
+        state.questions.push(newQ);
+      }
+
+      resetQuestionForm();
+      renderQuestionsList();
+    }
+
+    function importBulkQuestions() {
+      const rawText = document.getElementById('bulk-import-text').value.trim();
+      if (!rawText) {
+        alert("Enganxa primer un text amb preguntes.");
+        return;
+      }
+
+      const blocks = rawText.split(/\n\s*\n/);
+      let countImported = 0;
+
+      blocks.forEach(block => {
+        const lines = block.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        if (lines.length >= 3) {
+          const questionText = lines[0];
+          let imgUrl = "", audioUrl = "";
+          let rawOptions = [];
+
+          lines.slice(1).forEach(line => {
+            const imgMatch = line.match(/^\[IMG:\s*(.*)\]$/i);
+            const audioMatch = line.match(/^\[AUDIO:\s*(.*)\]$/i);
+            if (imgMatch) imgUrl = imgMatch[1].trim();
+            else if (audioMatch) audioUrl = audioMatch[1].trim();
+            else rawOptions.push(line);
+          });
+
+          if (rawOptions.length >= 2) {
+            let correctIdx = 0;
+            const cleanOptions = rawOptions.map((optLine, index) => {
+              let clean = optLine;
+              let optImg = "";
+              const inlineImgMatch = clean.match(/\[IMG:\s*(.*)\]/i);
+              if (inlineImgMatch) {
+                optImg = inlineImgMatch[1].trim();
+                clean = clean.replace(/\[IMG:\s*.*?\]/i, '').trim();
+              }
+              if (clean.startsWith('*')) {
+                correctIdx = index;
+                clean = clean.substring(1).trim();
+              }
+              clean = clean.replace(/^[A-Da-d][\)\.\:\-]\s*/, '');
+              return { text: clean, img: optImg };
+            });
+
+            const correctObj = cleanOptions[correctIdx];
+            cleanOptions.splice(correctIdx, 1);
+            cleanOptions.unshift(correctObj);
+
+            const qObj = { q: questionText, options: cleanOptions.slice(0, 4), correct: 0 };
+            if (imgUrl) qObj.img = imgUrl;
+            if (audioUrl) qObj.audio = audioUrl;
+
+            if (!state.questions) state.questions = [];
+            state.questions.push(qObj);
+            countImported++;
+          }
+        }
+      });
+
+      if (countImported > 0) {
+        alert(`S'han importat ${countImported} preguntes correctament!`);
+        document.getElementById('bulk-import-text').value = '';
+        renderQuestionsList();
+      } else {
+        alert("No s'ha pogut detectar cap format de pregunta vàlid.");
+      }
+    }
+
+    function removeQuestion(idx) {
+      if (!state.questions || state.questions.length <= 1) {
+        alert(I18N[currentLang].msgMinOneQ);
+        return;
+      }
+      state.questions.splice(idx, 1);
+      resetQuestionForm();
+      renderQuestionsList();
+    }
+
+    function saveConfig() {
+      state.p1aName = document.getElementById('cfg-name-p1a').value.trim() || "Hermione";
+      state.p1aImg = document.getElementById('cfg-img-p1a').value.trim() || defaultState.p1aImg;
+      state.p1bName = document.getElementById('cfg-name-p1b').value.trim() || "Harry Potter";
+      state.p1bImg = document.getElementById('cfg-img-p1b').value.trim() || defaultState.p1bImg;
+      state.p2Name = document.getElementById('cfg-name-p2').value.trim() || "Voldemort";
+      state.p2Img = document.getElementById('cfg-img-p2').value.trim() || defaultState.p2Img;
+      state.bgImg = document.getElementById('cfg-bg-img').value.trim() || defaultState.bgImg;
+      state.damageDeal = parseInt(document.getElementById('cfg-damage-deal').value) || 25;
+      state.damageSuper = parseInt(document.getElementById('cfg-damage-super').value) || 50;
+      state.damageReceive = parseInt(document.getElementById('cfg-damage-receive').value) || 20;
+      state.timerEnabled = document.getElementById('cfg-timer-enabled').checked;
+      state.timerSeconds = parseInt(document.getElementById('cfg-timer-seconds').value) || 10;
+
+      selectedPlayerName = state.p1aName;
+      selectedPlayerImg = state.p1aImg;
+
+      localStorage.setItem('quiz_fighter_cfg', JSON.stringify(state));
+      applyVisuals();
+      closeConfig();
+    }
+
+    window.onload = () => {
+      renderGemsTracker();
+      applyVisuals();
+      updateHP();
+      openLanguageScreen();
+    };
+  </script>
+
+
+</body></html>
